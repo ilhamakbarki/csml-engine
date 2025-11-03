@@ -3,6 +3,7 @@ use csml_engine::{Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
+use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientQuery {
@@ -12,6 +13,7 @@ pub struct ClientQuery {
 }
 
 #[get("/state")]
+#[instrument(name="GET /state")]
 pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   let client = Client {
@@ -22,6 +24,10 @@ pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix
 
   if let Some(value) = validate_api_key(&req) {
     eprintln!("AuthError: {:?}", value);
+    tracing::error!(
+      error.message = %value,
+      "AuthError: {:?}", value
+    );
     return HttpResponse::Forbidden().finish()
   }
 
@@ -33,6 +39,7 @@ pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix
     Ok(data) => HttpResponse::Ok().json(data),
     Err(err) => {
         eprintln!("EngineError: {:?}", err);
+        tracing::error!("EngineError: {:?}", err);
         HttpResponse::InternalServerError().finish()
     }
   }

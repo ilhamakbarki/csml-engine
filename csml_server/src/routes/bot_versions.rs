@@ -7,6 +7,7 @@ use csml_engine::{
 use csml_interpreter::data::csml_bot::CsmlBot;
 use serde::{Deserialize, Serialize};
 use std::thread;
+use tracing::{instrument};
 
 /**
  * fold bot into a single flow
@@ -15,11 +16,16 @@ use std::thread;
  *
  */
 #[post("/bots/fold")]
+#[instrument(name="POST /bots/fold")]
 pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest) -> HttpResponse {
     let bot = body.to_owned();
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -29,6 +35,7 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
         Ok(flow) => HttpResponse::Created().json(serde_json::json!({ "flow": flow })),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -41,6 +48,7 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
  *
  */
 #[post("/bots")]
+#[instrument(name="POST /bots")]
 pub async fn add_bot_version(
     body: web::Json<CsmlBot>,
     req: actix_web::HttpRequest,
@@ -49,6 +57,10 @@ pub async fn add_bot_version(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -60,6 +72,7 @@ pub async fn add_bot_version(
         Ok(data) => HttpResponse::Created().json(serde_json::json!(data)),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -92,6 +105,7 @@ pub struct GetBotVersionsQuery {
  * }
  */
 #[get("/bots/{bot_id}")]
+#[instrument(name="GET /bots/:bot_id")]
 pub async fn get_bot_latest_version(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -100,6 +114,10 @@ pub async fn get_bot_latest_version(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -112,6 +130,7 @@ pub async fn get_bot_latest_version(
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -123,6 +142,7 @@ pub async fn get_bot_latest_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}")]
+#[instrument(name="DELETE /bots/:bot_id")]
 pub async fn delete_bot_versions(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -131,6 +151,10 @@ pub async fn delete_bot_versions(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -142,6 +166,7 @@ pub async fn delete_bot_versions(
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -164,6 +189,7 @@ pub async fn delete_bot_versions(
  * }
  */
 #[get("/bots/{bot_id}/versions")]
+#[instrument(name="GET /bots/:bot_id/versions")]
 pub async fn get_bot_latest_versions(
     path: web::Path<BotIdPath>,
     query: web::Query<GetBotVersionsQuery>,
@@ -179,6 +205,10 @@ pub async fn get_bot_latest_versions(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -190,6 +220,7 @@ pub async fn get_bot_latest_versions(
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -217,6 +248,7 @@ pub struct BotVersionPath {
  * }
  */
 #[get("/bots/{bot_id}/versions/{version_id}")]
+#[instrument(name="GET /bots/:bot_id/versions/:version_id")]
 pub async fn get_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -226,6 +258,10 @@ pub async fn get_bot_version(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -238,6 +274,7 @@ pub async fn get_bot_version(
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -249,6 +286,7 @@ pub async fn get_bot_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}/versions/{version_id}")]
+#[instrument(name="DELETE /bots/:bot_id/versions/:version_id")]
 pub async fn delete_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -258,6 +296,10 @@ pub async fn delete_bot_version(
 
     if let Some(value) = validate_api_key(&req) {
         eprintln!("AuthError: {:?}", value);
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -269,6 +311,7 @@ pub async fn delete_bot_version(
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }

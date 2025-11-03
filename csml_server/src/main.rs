@@ -5,11 +5,13 @@ use csml_engine::make_migrations;
 use csml_interpreter::csml_logs::init_logger;
 
 mod routes;
+mod apm;
 
 const MAX_BODY_SIZE: usize = 8_388_608; // 8MB
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    let _ = apm::init_apm();
     init_logger();
 
     let server_port: String = match std::env::var("ENGINE_SERVER_PORT") {

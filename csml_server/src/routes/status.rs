@@ -1,5 +1,6 @@
 use actix_web::{get, HttpResponse};
 use std::thread;
+use tracing::{instrument, Span};
 
 /*
 * Get Server status
@@ -8,9 +9,11 @@ use std::thread;
 *
 */
 #[get("/status")]
+#[instrument(name="GET /status")]
 pub async fn get_status() -> HttpResponse {
-
+    let span = Span::current();
     let res = thread::spawn(move || {
+        let _guard = span.entered();
         csml_engine::get_status()
     }).join().unwrap();
 
@@ -18,6 +21,7 @@ pub async fn get_status() -> HttpResponse {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }

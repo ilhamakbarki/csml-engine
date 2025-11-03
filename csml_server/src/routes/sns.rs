@@ -5,6 +5,7 @@ use csml_engine::start_conversation;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::thread;
+use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SnsConfirmationRequest {
@@ -94,6 +95,7 @@ async fn handle_notification(body: &str) -> HttpResponse {
  * has been properly confirmed.
  */
 #[post("/sns")]
+#[instrument(name="POST /sns")]
 pub async fn handler(req: HttpRequest, body: web::Bytes) -> HttpResponse {
     let body_string = match std::str::from_utf8(&body) {
         Ok(res) => res,

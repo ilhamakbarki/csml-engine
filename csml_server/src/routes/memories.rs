@@ -3,6 +3,7 @@ use actix_web::{delete, get, post, web, HttpResponse};
 use csml_interpreter::data::Client;
 use serde::{Deserialize, Serialize};
 use std::thread;
+use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MemoryKeyPath {
@@ -29,6 +30,7 @@ pub struct Memory {
  *
  */
 #[post("/memories")]
+#[instrument(name="POST /memories")]
 pub async fn create_client_memory(
     query: web::Query<ClientQuery>,
     body: web::Json<Memory>,
@@ -40,7 +42,11 @@ pub async fn create_client_memory(
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -54,6 +60,7 @@ pub async fn create_client_memory(
         Ok(_) => HttpResponse::Created().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -66,6 +73,7 @@ pub async fn create_client_memory(
  *
  */
 #[delete("/memories/{key}")]
+#[instrument(name="DELETE /memories/:key")]
 pub async fn delete_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -79,7 +87,11 @@ pub async fn delete_memory(
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -91,6 +103,7 @@ pub async fn delete_memory(
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -103,6 +116,7 @@ pub async fn delete_memory(
  *
  */
 #[delete("/memories")]
+#[instrument(name="DELETE /memories")]
 pub async fn delete_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -113,7 +127,11 @@ pub async fn delete_memories(
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -125,6 +143,7 @@ pub async fn delete_memories(
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -135,6 +154,7 @@ pub async fn delete_memories(
  *
  */
 #[get("/memories/{key}")]
+#[instrument(name="GET /memories/:key")]
 pub async fn get_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -148,7 +168,11 @@ pub async fn get_memory(
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -160,6 +184,7 @@ pub async fn get_memory(
         Ok(memory) => HttpResponse::Ok().json(memory),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -170,6 +195,7 @@ pub async fn get_memory(
 *
 */
 #[get("/memories")]
+#[instrument(name="GET /memories")]
 pub async fn get_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -180,7 +206,11 @@ pub async fn get_memories(
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish();
     }
 
@@ -192,6 +222,7 @@ pub async fn get_memories(
         Ok(memory) => HttpResponse::Ok().json(memory),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }

@@ -11,3 +11,5 @@
 **/.webpack
 .vscode
 .idea
+docker-compose.yaml
+!docker/docker-compose.yaml

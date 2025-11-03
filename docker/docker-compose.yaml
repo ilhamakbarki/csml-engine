@@ -1,0 +1,11 @@
+services:
+  csml:
+    container_name: csml-server
+    image: csml:latest
+    build:
+      context: .
+      dockerfile: docker/sb.Dockerfile
+    ports:
+      - 5001:5000
+    env_file:
+      - .env

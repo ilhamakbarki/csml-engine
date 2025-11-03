@@ -94,6 +94,7 @@ ureq = { version = "2.4.0", features = ["json"] }
 bincode = "1.3.3"
 log = "0.4.14"
 env_logger= "0.9.0"
+tracing = "0.1.41"
 
 [[example]]
 name = "command_line"

@@ -3,6 +3,7 @@ use csml_interpreter::data::{Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
+use tracing::{instrument};
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,6 +26,7 @@ pub struct GetClientInfoQuery {
  * List all the messages a client has ever exchanged with the chatbot
  */
 #[get("/messages")]
+#[instrument(name="GET /messages")]
 pub async fn get_client_messages(query: web::Query<GetClientInfoQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
     let client = Client {
@@ -43,7 +45,11 @@ pub async fn get_client_messages(query: web::Query<GetClientInfoQuery>, req: act
     let from_date = query.limit.to_owned();
     let to_date = query.limit.to_owned();
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish()
     }
 
@@ -55,6 +61,7 @@ pub async fn get_client_messages(query: web::Query<GetClientInfoQuery>, req: act
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => {
         eprintln!("EngineError: {:?}", err);
+        tracing::error!("EngineError: {:?}", err);
         HttpResponse::InternalServerError().finish()
         }
     }

@@ -3,6 +3,7 @@ use csml_engine::{user_close_all_conversations, get_open_conversation, Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
+use tracing::{instrument};
 
 
 /**
@@ -10,10 +11,15 @@ use crate::routes::tools::validate_api_key;
  * Otherwise, return nothing
  */
 #[post("/conversations/open")]
+#[instrument(name="POST /conversations/open")]
 pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
     eprintln!("AuthError: {:?}", value);
+    tracing::error!(
+      error.message = %value,
+      "AuthError: {:?}", value
+    );
     return HttpResponse::Forbidden().finish()
   }
 
@@ -26,6 +32,7 @@ pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> H
     Ok(None) => HttpResponse::Ok().finish(),
     Err(err) => {
       eprintln!("EngineError: {:?}", err);
+      tracing::error!("EngineError: {:?}", err);
       HttpResponse::InternalServerError().finish()
     }
   }
@@ -36,10 +43,15 @@ pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> H
  * Close any open conversation
  */
 #[post("/conversations/close")]
+#[instrument(name="POST /conversations/close")]
 pub async fn close_user_conversations(body: web::Json<Client>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
     eprintln!("AuthError: {:?}", value);
+    tracing::error!(
+      error.message = %value,
+      "AuthError: {:?}", value
+    );
     return HttpResponse::Forbidden().finish()
   }
 
@@ -51,6 +63,7 @@ pub async fn close_user_conversations(body: web::Json<Client>, req: actix_web::H
     Ok(()) => HttpResponse::Ok().finish(),
     Err(err) => {
       eprintln!("EngineError: {:?}", err);
+      tracing::error!("EngineError: {:?}", err);
       HttpResponse::InternalServerError().finish()
     }
   }
@@ -69,10 +82,15 @@ pub struct GetClientInfoQuery {
  * List all the conversations of a given client
  */
 #[get("/conversations")]
+#[instrument(name="GET /conversations")]
 pub async fn get_client_conversations(query: web::Query<GetClientInfoQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
     eprintln!("AuthError: {:?}", value);
+    tracing::error!(
+      error.message = %value,
+      "AuthError: {:?}", value
+    );
     return HttpResponse::Forbidden().finish()
   }
 
@@ -97,6 +115,7 @@ pub async fn get_client_conversations(query: web::Query<GetClientInfoQuery>, req
     Ok(data) => HttpResponse::Ok().json(data),
     Err(err) => {
     eprintln!("EngineError: {:?}", err);
+    tracing::error!("EngineError: {:?}", err);
     HttpResponse::InternalServerError().finish()
     }
   }

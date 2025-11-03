@@ -4,13 +4,19 @@ use csml_engine::data::{RunRequest};
 use serde_json::{Value, json};
 use std::thread;
 use crate::routes::tools::validate_api_key;
+use tracing::{instrument, Span};
 
 #[post("/run")]
+#[instrument(name="POST /run")]
 pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -> HttpResponse {
   let mut request = body.event.to_owned();
 
   if let Some(value) = validate_api_key(&req) {
     eprintln!("AuthError: {:?}", value);
+    tracing::error!(
+        error.message = %value,
+        "AuthError: {:?}", value 
+    );
     return HttpResponse::Forbidden().finish()
   }
 
@@ -18,6 +24,7 @@ pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -
     Ok(bot_opt) => bot_opt,
     Err(err) => {
       eprintln!("EngineError: {:?}", err);
+      tracing::error!("EngineError: {:?}", err);
       return HttpResponse::BadRequest().finish()
     }
   };
@@ -28,7 +35,9 @@ pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -
     val => val,
   };
 
+  let span = Span::current();
   let res = thread::spawn(move || {
+    let _guard = span.entered();
     start_conversation(request, bot_opt)
   }).join().unwrap();
 
@@ -36,6 +45,7 @@ pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -
     Ok(data) => HttpResponse::Ok().json(data),
     Err(err) => {
       eprintln!("EngineError: {:?}", err);
+      tracing::error!("EngineError: {:?}", err);
       HttpResponse::InternalServerError().finish()
     }
   }

@@ -3,6 +3,7 @@ use csml_interpreter::data::{Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
+use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientQuery {
@@ -23,6 +24,7 @@ pub struct BotIdPath {
 *
 */
 #[delete("/data/clients")]
+#[instrument(name="DELETE /data/clients")]
 pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpRequest) -> HttpResponse {
     let client = Client {
         user_id: query.user_id.clone(),
@@ -30,7 +32,11 @@ pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpR
         bot_id: query.bot_id.clone(),
     };
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish()
     }
 
@@ -42,6 +48,7 @@ pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpR
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -54,9 +61,14 @@ pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpR
  *
  */
 #[delete("/data/bots/{bot_id}")]
+#[instrument(name="DELETE /data/bots/:bot_id")]
 pub async fn delete_bot(path: web::Path<BotIdPath>, req: actix_web::HttpRequest) -> HttpResponse {
 
-    if let Some(_value) = validate_api_key(&req) {
+    if let Some(value) = validate_api_key(&req) {
+        tracing::error!(
+            error.message = %value,
+            "AuthError: {:?}", value
+        );
         return HttpResponse::Forbidden().finish()
     }
 
@@ -68,6 +80,7 @@ pub async fn delete_bot(path: web::Path<BotIdPath>, req: actix_web::HttpRequest)
         Ok(_) => HttpResponse::NoContent().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -91,6 +104,7 @@ pub async fn delete_expired_data() -> HttpResponse {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            tracing::error!("EngineError: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
    }

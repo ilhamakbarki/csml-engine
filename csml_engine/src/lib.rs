@@ -1,3 +1,5 @@
+use tracing::{instrument};
+
 pub mod data;
 
 mod db_connectors;
@@ -57,6 +59,7 @@ use std::{collections::HashMap, env};
  * - channel_id: a given bot may be used on different channels (messenger, slack...)
  * - user_id: differentiate users on the same communication channel
  */
+#[instrument()]
 pub fn start_conversation(
     request: CsmlRequest,
     mut bot_opt: BotOpt,
@@ -527,6 +530,7 @@ fn check_for_hold(
 /**
  * get server status
  */
+#[instrument()]
 pub fn get_status() -> Result<serde_json::Value, EngineError> {
     let mut status = serde_json::Map::new();
 

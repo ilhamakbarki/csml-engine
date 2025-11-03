@@ -24,3 +24,7 @@ env_logger= "0.9"
 
 csml_engine = { path = "../csml_engine" }
 csml_interpreter = { path = "../csml_interpreter" }
+tracing-elastic-apm = "3.4.0"
+tracing-subscriber = "0.3.20"
+tracing = "0.1.41"
+uuid = "1.18.1"
