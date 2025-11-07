@@ -1,7 +1,8 @@
 use tracing_elastic_apm::config::{Config, Service, Authorization};
 use tracing_elastic_apm::model::{Language, Runtime};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, filter::EnvFilter};
 use tracing_elastic_apm::model::{System, Container, Kubernetes, Pod, Node, ServiceNode};
+use opentelemetry_sdk::propagation::TraceContextPropagator;
 
 pub fn init_apm() -> Result<(), Box<dyn std::error::Error>> {
     let apm_server_url = std::env::var("ELASTIC_APM_SERVER_URL").ok();
@@ -19,6 +20,8 @@ pub fn init_apm() -> Result<(), Box<dyn std::error::Error>> {
     let service_version = std::env!("CARGO_PKG_VERSION").to_owned();
     let environment = Some(std::env::var("ELASTIC_APM_ENVIRONMENT").unwrap_or_else(|_| "development".to_string()));
     let rust_version = std::env::var("RUST_VERSION").unwrap_or_else(|_| "N/A".to_string());
+
+    opentelemetry::global::set_text_map_propagator(TraceContextPropagator::new());
 
     let apm_system = System {
         hostname: std::env::var("HOSTNAME").ok(),
@@ -69,6 +72,8 @@ pub fn init_apm() -> Result<(), Box<dyn std::error::Error>> {
 
     // 3. Inisialisasi Global Subscriber
     let result = tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(tracing_subscriber::fmt::layer())
         .with(apm_layer)
         .try_init();
 
