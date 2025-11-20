@@ -15,14 +15,7 @@ pipeline {
                   def tagBuildNumber = "${REGISTRY_HOST}/${DOCKER_IMAGE}:staging_beta-${BUILD_NUMBER}"
 
                   echo 'Start Build Image Staging'
-                  sh "docker build -t ${tagLatest} -f docker/sb.Dockerfile ."
-
-                  echo 'Start Pushing Image'
-                  docker.withRegistry("https://${REGISTRY_HOST}", "DOCKER_REGISTRY_USER") {
-                      sh "docker push ${tagLatest}"
-                      sh "docker tag ${tagLatest} ${tagBuildNumber}"
-                      sh "docker push ${tagBuildNumber}"
-                  }
+                  sh "docker buildx build --platform linux/amd64,linux/arm64 -t ${tagLatest} -t ${tagBuildNumber} --push -f docker/sb.Dockerfile ."
 
                   echo 'Start Deploy on Staging'
                   sh "kubectl set image deployment csml csml=${tagBuildNumber} -n=csml-staging"
@@ -53,15 +46,8 @@ pipeline {
                   def tagLatest = "${REGISTRY_HOST}/${DOCKER_IMAGE}:release-latest"
                   def tagBuildNumber = "${REGISTRY_HOST}/${DOCKER_IMAGE}:${TAG_NAME}-${BUILD_NUMBER}"
 
-                  echo 'Start Build Image Staging'
-                  sh "docker build -t ${tagLatest} -f docker/sb.Dockerfile ."
-
-                  echo 'Start Pushing Image'
-                  docker.withRegistry("https://${REGISTRY_HOST}", "DOCKER_REGISTRY_USER") {
-                      sh "docker push ${tagLatest}"
-                      sh "docker tag ${tagLatest} ${tagBuildNumber}"
-                      sh "docker push ${tagBuildNumber}"
-                  }
+                  echo 'Start Build Image Production'
+                  sh "docker buildx build --platform linux/amd64 -t ${tagLatest} -t ${tagBuildNumber} --push -f docker/sb.Dockerfile ."
 
                   echo 'Start Deploy on Production'
                   sh "kubectl set image deployment csml csml=${tagBuildNumber} -n=csml-production"
