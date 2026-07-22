@@ -190,6 +190,7 @@ pub fn is_sqlite() -> bool {
     }
 }
 
+#[tracing::instrument(name = "db.setup.init", skip_all, fields(db_layer = "dispatch"))]
 pub fn init_db() -> Result<Database, EngineError> {
     #[cfg(feature = "mongo")]
     if is_mongodb() {
@@ -214,6 +215,7 @@ pub fn init_db() -> Result<Database, EngineError> {
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.setup.migrate", skip_all, fields(db_layer = "dispatch"))]
 pub fn make_migrations() -> Result<(), EngineError> {
 
     #[cfg(feature = "postgresql")]

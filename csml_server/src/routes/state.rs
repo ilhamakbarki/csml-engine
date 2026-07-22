@@ -3,7 +3,6 @@ use csml_engine::{Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
-use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientQuery {
@@ -13,7 +12,7 @@ pub struct ClientQuery {
 }
 
 #[get("/state")]
-#[instrument(name="GET /state")]
+#[tracing::instrument(name="GET /state", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id)))]
 pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   let client = Client {
@@ -31,7 +30,9 @@ pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix
     return HttpResponse::Forbidden().finish()
   }
 
+  let span = tracing::Span::current();
   let res = thread::spawn(move || {
+    let _guard = span.entered();
     csml_engine::get_current_state(&client)
   }).join().unwrap();
 

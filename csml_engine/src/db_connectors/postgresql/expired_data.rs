@@ -11,6 +11,7 @@ use super::{
     }
 };
 
+#[tracing::instrument(name = "db.pg.setup.delete_expired", skip_all, fields(db_system = "postgresql", db_operation = "delete"))]
 pub fn delete_expired_data(
     db: &PostgresqlClient,
 ) -> Result<(), EngineError> {

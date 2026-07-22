@@ -12,6 +12,7 @@ use crate::error_messages::ERROR_DB_SETUP;
 use crate::{Client, ConversationInfo, Database, EngineError};
 use csml_interpreter::data::csml_logs::{csml_logger, CsmlLog, LogLvl};
 
+#[tracing::instrument(name = "db.message.add_bulk", skip_all, fields(db_layer = "dispatch", db_operation = "insert", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), direction = crate::utils::trunc(direction), db_batch_size = msgs.len() as i64))]
 pub fn add_messages_bulk(
     data: &mut ConversationInfo,
     msgs: Vec<serde_json::Value>,
@@ -92,6 +93,7 @@ pub fn add_messages_bulk(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.message.list", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = ?limit, db_paginated = pagination_key.is_some(), db_from_date = ?from_date, db_to_date = ?to_date))]
 pub fn get_client_messages(
     client: &Client,
     db: &mut Database,

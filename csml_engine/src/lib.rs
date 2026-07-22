@@ -1,5 +1,3 @@
-use tracing::{instrument};
-
 pub mod data;
 
 mod db_connectors;
@@ -59,7 +57,15 @@ use std::{collections::HashMap, env};
  * - channel_id: a given bot may be used on different channels (messenger, slack...)
  * - user_id: differentiate users on the same communication channel
  */
-#[instrument()]
+#[tracing::instrument(
+    name = "engine.start_conversation",
+    skip_all,
+    fields(
+        request_id = crate::utils::trunc(&request.request_id),
+        bot_id = crate::utils::trunc(&request.client.bot_id),
+        channel_id = crate::utils::trunc(&request.client.channel_id),
+    )
+)]
 pub fn start_conversation(
     request: CsmlRequest,
     mut bot_opt: BotOpt,
@@ -134,6 +140,7 @@ pub fn start_conversation(
     )
 }
 
+#[tracing::instrument(name = "engine.check_switch_bot", skip_all)]
 fn check_switch_bot(
     result: Result<
         (
@@ -188,6 +195,14 @@ fn check_switch_bot(
  * Return the latest conversation that is still open for a given user
  * (there should not be more than one), or None if there isn't any.
  */
+#[tracing::instrument(
+    name = "engine.get_open_conversation",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn get_open_conversation(client: &Client) -> Result<Option<DbConversation>, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -195,6 +210,14 @@ pub fn get_open_conversation(client: &Client) -> Result<Option<DbConversation>, 
     conversations::get_latest_open(client, &mut db)
 }
 
+#[tracing::instrument(
+    name = "engine.get_client_memories",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn get_client_memories(client: &Client) -> Result<serde_json::Value, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -202,6 +225,15 @@ pub fn get_client_memories(client: &Client) -> Result<serde_json::Value, EngineE
     memories::get_memories(client, &mut db)
 }
 
+#[tracing::instrument(
+    name = "engine.get_client_memory",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+        memory_key = crate::utils::trunc(key),
+    )
+)]
 pub fn get_client_memory(client: &Client, key: &str) -> Result<serde_json::Value, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -209,6 +241,15 @@ pub fn get_client_memory(client: &Client, key: &str) -> Result<serde_json::Value
     memories::get_memory(client, key, &mut db)
 }
 
+#[tracing::instrument(
+    name = "engine.get_client_messages",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+        db_limit = ?limit,
+    )
+)]
 pub fn get_client_messages(
     client: &Client,
     limit: Option<i64>,
@@ -222,6 +263,15 @@ pub fn get_client_messages(
     messages::get_client_messages(client, &mut db, limit, pagination_key, from_date, to_date)
 }
 
+#[tracing::instrument(
+    name = "engine.get_client_conversations",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+        db_limit = ?limit,
+    )
+)]
 pub fn get_client_conversations(
     client: &Client,
     limit: Option<i64>,
@@ -236,6 +286,14 @@ pub fn get_client_conversations(
 /**
  * Get current State ether Hold or NULL
  */
+#[tracing::instrument(
+    name = "engine.get_current_state",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn get_current_state(client: &Client) -> Result<Option<serde_json::Value>, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -246,6 +304,15 @@ pub fn get_current_state(client: &Client) -> Result<Option<serde_json::Value>, E
 /**
  * Create memory
  */
+#[tracing::instrument(
+    name = "engine.create_client_memory",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+        memory_key = crate::utils::trunc(&key),
+    )
+)]
 pub fn create_client_memory(
     client: &Client,
     key: String,
@@ -263,6 +330,14 @@ pub fn create_client_memory(
 /**
  * Create bot version
  */
+#[tracing::instrument(
+    name = "engine.create_bot_version",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&csml_bot.id),
+        flow_count = csml_bot.flows.len() as i64,
+    )
+)]
 pub fn create_bot_version(mut csml_bot: CsmlBot) -> Result<BotVersionCreated, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -294,6 +369,11 @@ pub fn create_bot_version(mut csml_bot: CsmlBot) -> Result<BotVersionCreated, En
 /**
  * get by bot_id
  */
+#[tracing::instrument(
+    name = "engine.get_last_bot_version",
+    skip_all,
+    fields(bot_id = crate::utils::trunc(bot_id))
+)]
 pub fn get_last_bot_version(bot_id: &str) -> Result<Option<BotVersion>, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -304,6 +384,14 @@ pub fn get_last_bot_version(bot_id: &str) -> Result<Option<BotVersion>, EngineEr
 /**
  * get bot by version_id
  */
+#[tracing::instrument(
+    name = "engine.get_bot_by_version_id",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(bot_id),
+        version_id = crate::utils::trunc(id),
+    )
+)]
 pub fn get_bot_by_version_id(id: &str, bot_id: &str) -> Result<Option<BotVersion>, EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -324,6 +412,14 @@ pub fn get_bot_by_version_id(id: &str, bot_id: &str) -> Result<Option<BotVersion
  *  "created_at": String
  * }
  */
+#[tracing::instrument(
+    name = "engine.get_bot_versions",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(bot_id),
+        db_limit = ?limit,
+    )
+)]
 pub fn get_bot_versions(
     bot_id: &str,
     limit: Option<i64>,
@@ -338,6 +434,14 @@ pub fn get_bot_versions(
 /**
  * delete bot by version_id
  */
+#[tracing::instrument(
+    name = "engine.delete_bot_version",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(bot_id),
+        version_id = crate::utils::trunc(id),
+    )
+)]
 pub fn delete_bot_version_id(id: &str, bot_id: &str) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -348,6 +452,11 @@ pub fn delete_bot_version_id(id: &str, bot_id: &str) -> Result<(), EngineError> 
 /**
  * Delete all bot versions of bot_id
  */
+#[tracing::instrument(
+    name = "engine.delete_all_bot_versions",
+    skip_all,
+    fields(bot_id = crate::utils::trunc(bot_id))
+)]
 pub fn delete_all_bot_versions(bot_id: &str) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -358,6 +467,11 @@ pub fn delete_all_bot_versions(bot_id: &str) -> Result<(), EngineError> {
 /**
  * Delete all data related to bot: versions, conversations, messages, memories, nodes, integrations
  */
+#[tracing::instrument(
+    name = "engine.delete_all_bot_data",
+    skip_all,
+    fields(bot_id = crate::utils::trunc(bot_id))
+)]
 pub fn delete_all_bot_data(bot_id: &str) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -368,6 +482,14 @@ pub fn delete_all_bot_data(bot_id: &str) -> Result<(), EngineError> {
 /**
  * Delete all the memories of a given client
  */
+#[tracing::instrument(
+    name = "engine.delete_client_memories",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn delete_client_memories(client: &Client) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -378,6 +500,15 @@ pub fn delete_client_memories(client: &Client) -> Result<(), EngineError> {
 /**
  * Delete a single memory for a given Client
  */
+#[tracing::instrument(
+    name = "engine.delete_client_memory",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+        memory_key = crate::utils::trunc(memory_name),
+    )
+)]
 pub fn delete_client_memory(client: &Client, memory_name: &str) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -388,6 +519,14 @@ pub fn delete_client_memory(client: &Client, memory_name: &str) -> Result<(), En
 /**
  * Delete all data related to a given Client
  */
+#[tracing::instrument(
+    name = "engine.delete_client",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn delete_client(client: &Client) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -398,6 +537,11 @@ pub fn delete_client(client: &Client) -> Result<(), EngineError> {
 /**
  * List all the steps in every flow of a given CSML bot
  */
+#[tracing::instrument(
+    name = "engine.get_steps_from_flow",
+    skip_all,
+    fields(bot_id = crate::utils::trunc(&bot.id))
+)]
 pub fn get_steps_from_flow(bot: CsmlBot) -> HashMap<String, Vec<String>> {
     csml_interpreter::get_steps_from_flow(bot)
 }
@@ -407,6 +551,14 @@ pub fn get_steps_from_flow(bot: CsmlBot) -> HashMap<String, Vec<String>> {
  * Does not check for possible runtime errors, only for build-time errors
  * (missing steps or flows, syntax errors, etc.)
  */
+#[tracing::instrument(
+    name = "engine.validate_bot",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&bot.id),
+        flow_count = bot.flows.len() as i64,
+    )
+)]
 pub fn validate_bot(mut bot: CsmlBot) -> CsmlResult {
     // load native components into the bot
     bot.native_components = match load_components() {
@@ -441,6 +593,14 @@ pub fn validate_bot(mut bot: CsmlBot) -> CsmlResult {
  *  step_name: -> flow_name_step_name:
  *  goto step_name -> goto flow_name_step_name
  */
+#[tracing::instrument(
+    name = "engine.fold_bot",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&bot.id),
+        flow_count = bot.flows.len() as i64,
+    )
+)]
 pub fn fold_bot(mut bot: CsmlBot) -> Result<String, EngineError> {
     // load native components into the bot
     bot.native_components = match load_components() {
@@ -456,6 +616,14 @@ pub fn fold_bot(mut bot: CsmlBot) -> Result<String, EngineError> {
  * We also need to both clean the hold/local memory state to make sure
  * that outdated variables or hold positions are not loaded into the next open conversation.
  */
+#[tracing::instrument(
+    name = "engine.user_close_all_conversations",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&client.bot_id),
+        channel_id = crate::utils::trunc(&client.channel_id),
+    )
+)]
 pub fn user_close_all_conversations(client: Client) -> Result<(), EngineError> {
     let mut db = init_db()?;
     init_logger();
@@ -474,6 +642,7 @@ pub fn user_close_all_conversations(client: Client) -> Result<(), EngineError> {
  * If the hold is valid, we also need to load the local step memory
  * (context.hold.step_vars) into the conversation context.
  */
+#[tracing::instrument(name = "engine.hold.check", skip_all)]
 fn check_for_hold(
     data: &mut ConversationInfo,
     bot: &CsmlBot,
@@ -530,7 +699,7 @@ fn check_for_hold(
 /**
  * get server status
  */
-#[instrument()]
+#[tracing::instrument(name = "engine.get_status", skip_all)]
 pub fn get_status() -> Result<serde_json::Value, EngineError> {
     let mut status = serde_json::Map::new();
 
@@ -603,6 +772,7 @@ pub fn get_status() -> Result<serde_json::Value, EngineError> {
 /**
  * Make migrations for PgSQL and do nothing for MongoDB and DynamoDB
  */
+#[tracing::instrument(name = "engine.make_migrations", skip_all)]
 pub fn make_migrations() -> Result<(), EngineError> {
     db_connectors::make_migrations()
 }
@@ -610,6 +780,7 @@ pub fn make_migrations() -> Result<(), EngineError> {
 /**
  * delete expired data
  */
+#[tracing::instrument(name = "engine.delete_expired_data", skip_all)]
 pub fn delete_expired_data() -> Result<(), EngineError> {
     let mut db = init_db()?;
 

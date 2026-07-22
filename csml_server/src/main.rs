@@ -11,7 +11,18 @@ const MAX_BODY_SIZE: usize = 8_388_608; // 8MB
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    let _ = apm::init_apm();
+    let apm_enabled = match apm::init_apm() {
+        Ok(enabled) => enabled,
+        Err(err) => {
+            eprintln!("⚠️ APM init failed: {}", err);
+            false
+        }
+    };
+    // init_logger() stays UNCONDITIONAL: csml_engine calls it internally from ~19 public
+    // entry points (csml_engine/src/lib.rs:67, 193, 200, ... 461), so skipping it here
+    // would change nothing except lose the module suppressions in csml_logs.rs:92-96 on
+    // the first request. When tracing-log is absent this simply succeeds as before; when
+    // present it fails harmlessly and apm.rs has already capped the bridge.
     init_logger();
 
     let server_port: String = match std::env::var("ENGINE_SERVER_PORT") {
@@ -26,7 +37,7 @@ async fn main() -> std::io::Result<()> {
         Err(err) => panic!("PgSQL Migration ERROR: {:?}", err),
     };
 
-    HttpServer::new(|| {
+    let server_result = HttpServer::new(|| {
         App::new()
             .wrap(
                 Cors::default()
@@ -69,5 +80,13 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(format!("0.0.0.0:{}", server_port))?
     .run()
-    .await
+    .await;
+
+    if apm_enabled {
+        // tracing-elastic-apm 3.4.0 has no flush()/shutdown(); give detached batches a
+        // moment to reach the APM server before the runtime is torn down.
+        std::thread::sleep(std::time::Duration::from_secs(2));
+    }
+
+    server_result
 }

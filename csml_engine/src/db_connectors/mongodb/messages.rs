@@ -76,6 +76,7 @@ fn format_message_struct(message: bson::document::Document) -> Result<DbMessage,
     })
 }
 
+#[tracing::instrument(name = "db.mongo.message.add_bulk", skip_all, fields(db_system = "mongodb", db_operation = "insert_many", db_collection = "message", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), direction = crate::utils::trunc(direction), db_batch_size = msgs.len() as i64))]
 pub fn add_messages_bulk(
     data: &ConversationInfo,
     msgs: &[serde_json::Value],
@@ -96,6 +97,7 @@ pub fn add_messages_bulk(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.message.delete_user", skip_all, fields(db_system = "mongodb", db_operation = "delete_many", db_collection = "message", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_messages(client: &Client, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("message");
 
@@ -110,6 +112,7 @@ pub fn delete_user_messages(client: &Client, db: &MongoDbClient) -> Result<(), E
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.message.list", skip_all, fields(db_system = "mongodb", db_operation = "find", db_collection = "message", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = ?limit, db_paginated = pagination_key.is_some(), db_from_date = ?from_date, db_to_date = ?to_date))]
 pub fn get_client_messages(
     client: &Client,
     db: &MongoDbClient,

@@ -12,6 +12,7 @@ use super::{
     pagination::*
 };
 
+#[tracing::instrument(name = "db.sqlite.conversation.create", skip_all, fields(db_system = "sqlite", db_operation = "insert", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
 pub fn create_conversation(
     flow_id: &str,
     step_id: &str,
@@ -39,6 +40,7 @@ pub fn create_conversation(
     Ok(id.to_string())
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.close", skip_all, fields(db_system = "sqlite", db_operation = "update", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&_client.bot_id), channel_id = crate::utils::trunc(&_client.channel_id), status = crate::utils::trunc(status)))]
 pub fn close_conversation(
     id: &str,
     _client: &Client,
@@ -57,6 +59,7 @@ pub fn close_conversation(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.close_all", skip_all, fields(db_system = "sqlite", db_operation = "update", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_all_conversations(client: &Client, db: &SqliteClient) -> Result<(), EngineError> {
     diesel::update(
         csml_conversations::table
@@ -70,6 +73,7 @@ pub fn close_all_conversations(client: &Client, db: &SqliteClient) -> Result<(),
     Ok(())
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.get_latest_open", skip_all, fields(db_system = "sqlite", db_operation = "select", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_latest_open(
     client: &Client,
     db: &SqliteClient,
@@ -107,6 +111,7 @@ pub fn get_latest_open(
     }
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.update", skip_all, fields(db_system = "sqlite", db_operation = "update", db_sql_table = "csml_conversations", flow_id = ?flow_id, step_id = ?step_id))]
 pub fn update_conversation(
     conversation_id: &str,
     flow_id: Option<String>,
@@ -150,6 +155,7 @@ pub fn update_conversation(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.delete_user", skip_all, fields(db_system = "sqlite", db_operation = "delete", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_conversations(client: &Client, db: &SqliteClient) -> Result<(), EngineError> {
     diesel::delete(csml_conversations::table
         .filter(csml_conversations::bot_id.eq(&client.bot_id))
@@ -160,6 +166,7 @@ pub fn delete_user_conversations(client: &Client, db: &SqliteClient) -> Result<(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.list", skip_all, fields(db_system = "sqlite", db_operation = "select", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = ?limit, db_paginated = pagination_key.is_some()))]
 pub fn get_client_conversations(
     client: &Client,
     db: &SqliteClient,
@@ -218,6 +225,7 @@ pub fn get_client_conversations(
     }
 }
 
+#[tracing::instrument(name = "db.sqlite.conversation.delete_all_bot_data", skip_all, fields(db_system = "sqlite", db_operation = "delete", db_sql_table = "csml_conversations", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     db: &SqliteClient,

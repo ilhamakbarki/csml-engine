@@ -25,11 +25,9 @@ env_logger= "0.9"
 csml_engine = { path = "../csml_engine" }
 csml_interpreter = { path = "../csml_interpreter" }
 tracing-elastic-apm = "3.4.0"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["std", "fmt", "ansi", "smallvec", "env-filter"] }
 tracing = "0.1.41"
 uuid = "1.18.1"
-opentelemetry = "0.31.0"
-opentelemetry_sdk = "0.31.0"
 
 [patch.crates-io]
 memchr = { version = "2.7.6" }

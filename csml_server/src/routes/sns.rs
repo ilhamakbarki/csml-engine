@@ -5,7 +5,6 @@ use csml_engine::start_conversation;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::thread;
-use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SnsConfirmationRequest {
@@ -45,6 +44,8 @@ async fn handle_notification(body: &str) -> HttpResponse {
         Ok(res) => res,
         Err(err) => {
             eprintln!("SNS request notification parse error: {:?}", err);
+            let m = format!("{:?}", err);
+            tracing::error!("SNS request notification parse error: {}", crate::routes::tools::trunc(&m));
             return HttpResponse::Ok().body("Request body can not be properly parsed");
         }
     };
@@ -54,6 +55,8 @@ async fn handle_notification(body: &str) -> HttpResponse {
         Ok(res) => res,
         Err(err) => {
             eprintln!("SNS message notification parse error: {:?}", err);
+            let m = format!("{:?}", err);
+            tracing::error!("SNS message notification parse error: {}", crate::routes::tools::trunc(&m));
             return HttpResponse::Ok().body("Request body is not a valid CSML request");
         }
     };
@@ -63,6 +66,8 @@ async fn handle_notification(body: &str) -> HttpResponse {
         Ok(bot_opt) => bot_opt,
         Err(err) => {
             eprintln!("SNS bot_opt parse error: {:?}", err);
+            let m = format!("{:?}", err);
+            tracing::error!("SNS bot_opt parse error: {}", crate::routes::tools::trunc(&m));
             return HttpResponse::Ok().body("Request body is not a valid CSML request");
         }
     };
@@ -74,14 +79,20 @@ async fn handle_notification(body: &str) -> HttpResponse {
         val => val,
     };
 
-    let res = thread::spawn(move || start_conversation(event, bot_opt))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        start_conversation(event, bot_opt)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => {
             eprintln!("EngineError: {:?}", err);
+            let m = format!("{:?}", err);
+            tracing::error!("EngineError: {}", crate::routes::tools::trunc(&m));
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -95,7 +106,7 @@ async fn handle_notification(body: &str) -> HttpResponse {
  * has been properly confirmed.
  */
 #[post("/sns")]
-#[instrument(name="POST /sns")]
+#[tracing::instrument(name="POST /sns", skip_all)]
 pub async fn handler(req: HttpRequest, body: web::Bytes) -> HttpResponse {
     let body_string = match std::str::from_utf8(&body) {
         Ok(res) => res,

@@ -11,6 +11,7 @@ use crate::error_messages::ERROR_DB_SETUP;
 use crate::{Client, Database, EngineError};
 use csml_interpreter::data::csml_logs::{csml_logger, CsmlLog, LogLvl};
 
+#[tracing::instrument(name = "db.client.delete", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_client(client: &Client, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(None, None, None, format!("db call delete client")),

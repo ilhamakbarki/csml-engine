@@ -15,6 +15,7 @@ use crate::{Client, ConversationInfo, Database, EngineError, Memory};
 use crate::db_connectors::utils::*;
 use std::collections::HashMap;
 
+#[tracing::instrument(name = "db.memory.add_batch", skip_all, fields(db_layer = "dispatch", db_operation = "insert", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), db_batch_size = memories.len() as i64))]
 pub fn add_memories(
     data: &mut ConversationInfo,
     memories: &HashMap<String, Memory>,
@@ -65,6 +66,7 @@ pub fn add_memories(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.memory.create", skip_all, fields(db_layer = "dispatch", db_operation = "insert", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(&key)))]
 pub fn create_client_memory(
     client: &Client,
     key: String,
@@ -124,6 +126,7 @@ pub fn create_client_memory(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.memory.get_all_internal", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn internal_use_get_memories(client: &Client, db: &mut Database) -> Result<serde_json::Value, EngineError> {
     csml_logger(
         CsmlLog::new(
@@ -174,6 +177,7 @@ pub fn internal_use_get_memories(client: &Client, db: &mut Database) -> Result<s
 /**
  * Get client Memories
  */
+#[tracing::instrument(name = "db.memory.get_all", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
  pub fn get_memories(client: &Client, db: &mut Database) -> Result<serde_json::Value, EngineError> {
     csml_logger(
         CsmlLog::new(
@@ -224,6 +228,7 @@ pub fn internal_use_get_memories(client: &Client, db: &mut Database) -> Result<s
 /**
  * Get client Memory
  */
+#[tracing::instrument(name = "db.memory.get", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
  pub fn get_memory(client: &Client, key: &str, db: &mut Database) -> Result<serde_json::Value, EngineError> {
     csml_logger(
         CsmlLog::new(
@@ -272,6 +277,7 @@ pub fn internal_use_get_memories(client: &Client, db: &mut Database) -> Result<s
 }
 
 
+#[tracing::instrument(name = "db.memory.delete", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn delete_client_memory(client: &Client, key: &str, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(
@@ -319,6 +325,7 @@ pub fn delete_client_memory(client: &Client, key: &str, db: &mut Database) -> Re
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.memory.delete_all", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_client_memories(client: &Client, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(

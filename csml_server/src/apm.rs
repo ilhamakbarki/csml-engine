@@ -2,26 +2,33 @@ use tracing_elastic_apm::config::{Config, Service, Authorization};
 use tracing_elastic_apm::model::{Language, Runtime};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, filter::EnvFilter};
 use tracing_elastic_apm::model::{System, Container, Kubernetes, Pod, Node, ServiceNode};
-use opentelemetry_sdk::propagation::TraceContextPropagator;
 
-pub fn init_apm() -> Result<(), Box<dyn std::error::Error>> {
-    let apm_server_url = std::env::var("ELASTIC_APM_SERVER_URL").ok();
-    let service_name = std::env::var("ELASTIC_APM_SERVICE_NAME").ok();
+fn env_clean(key: &str) -> Option<String> {
+    std::env::var(key)
+        .ok()
+        .map(|v| v.trim().trim_matches('"').trim_matches('\'').trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+/// Returns Ok(true) when the tracing subscriber was installed; Ok(false) when APM
+/// is disabled by configuration or a subscriber was already present.
+pub fn init_apm() -> Result<bool, Box<dyn std::error::Error>> {
+    let apm_server_url = env_clean("ELASTIC_APM_SERVER_URL");
+    let service_name = env_clean("ELASTIC_APM_SERVICE_NAME");
 
     if apm_server_url.is_none() || service_name.is_none() {
         println!("⚠️ Variabel APM (URL atau SERVICE_NAME) not found. Skipping init APM.");
-        return Ok(());
+        return Ok(false);
     }
 
     let apm_server_url = apm_server_url.unwrap();
     let service_name = service_name.unwrap();
+    let apm_server_url = apm_server_url.trim_end_matches('/').to_string();
 
-    let apm_secret_token = std::env::var("ELASTIC_APM_SECRET_TOKEN").ok(); 
+    let apm_secret_token = env_clean("ELASTIC_APM_SECRET_TOKEN");
     let service_version = std::env!("CARGO_PKG_VERSION").to_owned();
-    let environment = Some(std::env::var("ELASTIC_APM_ENVIRONMENT").unwrap_or_else(|_| "development".to_string()));
+    let environment = Some(env_clean("ELASTIC_APM_ENVIRONMENT").unwrap_or_else(|| "development".to_string()));
     let rust_version = std::env::var("RUST_VERSION").unwrap_or_else(|_| "N/A".to_string());
-
-    opentelemetry::global::set_text_map_propagator(TraceContextPropagator::new());
 
     let apm_system = System {
         hostname: std::env::var("HOSTNAME").ok(),
@@ -71,18 +78,70 @@ pub fn init_apm() -> Result<(), Box<dyn std::error::Error>> {
     let apm_layer = tracing_elastic_apm::new_layer(service_name, apm_config)?;
 
     // 3. Inisialisasi Global Subscriber
+    //
+    // WARNING: EnvFilter::from_default_env() installs an ERROR-ONLY filter when RUST_LOG
+    // is unset or empty. #[instrument] spans are INFO, so that silently disables every
+    // span callsite in the process and NOTHING is ever sent to APM. Always fall back to
+    // an explicit usable filter.
+    //
+    // WARNING: this EnvFilter MUST stay a global registry layer. Do NOT move it onto
+    // apm_layer via `.with_filter(...)`: tracing-elastic-apm 3.4.0 panics with
+    // "Trace context not found!" (layer.rs:65) whenever a child span reaches ApmLayer
+    // while its parent was filtered out of ApmLayer only.
+    //
+    // WARNING: never set a bare level here or in RUST_LOG (e.g. RUST_LOG=debug). That
+    // enables the reqwest/hyper/tokio callsites *inside* the APM exporter itself, whose
+    // spans are then exported, which emits more requests -- a self-amplifying loop.
+    // Keep csml_engine at `info`: the private high-fan-out DB helpers are deliberately
+    // registered at `debug` and the crate does one detached HTTP POST per span.
+    const DEFAULT_FILTER: &str = "warn,csml_server=info,csml_engine=info,csml_interpreter=warn,hyper=off,h2=off,reqwest=off,tokio=off,rustls=off";
+
+    let filter_directives = match std::env::var("RUST_LOG") {
+        Ok(v) if !v.trim().is_empty() => v.trim().to_string(),
+        _ => DEFAULT_FILTER.to_string(),
+    };
+    println!("🔎 Tracing filter: {}", filter_directives);
+
+    let env_filter = EnvFilter::try_new(&filter_directives)
+        .unwrap_or_else(|_| EnvFilter::new(DEFAULT_FILTER));
+
     let result = tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
+        .with(env_filter)
         .with(tracing_subscriber::fmt::layer())
         .with(apm_layer)
         .try_init();
 
     match result {
-        Ok(_) => println!("✅ Elastic APM Tracing Ready for sending traces."),
-        Err(_) => println!("⚠️ Tracing already initialized."),
-    }
+        Ok(_) => {
+            // Cap the log -> tracing bridge (installed by try_init when the tracing-log
+            // feature is compiled in) at CSML_LOG_LEVEL, so enabling span tracing does
+            // NOT also unmute csml_logger's Info-level `db call save messages {:?}`
+            // (db_connectors/messages.rs:26) and `db call set state ... {:?}`
+            // (db_connectors/state.rs:183), which print message bodies and cleartext
+            // bot variables. Preserves today's behaviour exactly.
+            let log_level = match std::env::var("CSML_LOG_LEVEL")
+                .unwrap_or_else(|_| "error".to_string())
+                .trim()
+                .to_ascii_lowercase()
+                .as_str()
+            {
+                "trace" => log::LevelFilter::Trace,
+                "debug" => log::LevelFilter::Debug,
+                "info" => log::LevelFilter::Info,
+                "warn" => log::LevelFilter::Warn,
+                "off" => log::LevelFilter::Off,
+                _ => log::LevelFilter::Error,
+            };
+            log::set_max_level(log_level);
 
-    Ok(())
+            println!("✅ Elastic APM Tracing Ready for sending traces.");
+            Ok(true)
+        }
+        Err(e) => {
+            println!("⚠️ Tracing init returned: {} (subscriber may already be installed)", e);
+            Ok(false)
+        }
+    }
 }
 
 fn detect_container() -> Option<Container> {

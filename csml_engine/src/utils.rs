@@ -484,3 +484,14 @@ pub fn get_low_data_mode_value(event: &Event) -> bool {
 
     return false;
 }
+
+/// Clamp a label value to a byte length APM Server will accept (limit is 1024).
+/// `bot_id` / `channel_id` / `conversation_id` / memory keys are client-supplied and
+/// length-unvalidated; one oversized label makes apm-server reject the entire ndjson
+/// batch with a 400 that tracing-elastic-apm silently discards.
+pub fn trunc(s: &str) -> &str {
+    if s.len() <= 256 { return s; }
+    let mut end = 256;
+    while end > 0 && !s.is_char_boundary(end) { end -= 1; }
+    &s[..end]
+}

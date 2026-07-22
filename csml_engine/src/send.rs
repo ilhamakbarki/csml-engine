@@ -1,5 +1,6 @@
 use crate::data::{ConversationInfo};
 
+#[tracing::instrument(name = "engine.callback.http_post", skip_all)]
 fn format_and_transfer(callback_url: &str, msg: serde_json::Value) {
     let mut request = ureq::post(callback_url);
 
@@ -10,6 +11,8 @@ fn format_and_transfer(callback_url: &str, msg: serde_json::Value) {
 
     if let Err(err) = response{
         eprintln!("callback_url call failed: {:?}", err.to_string());
+        let m = format!("{:?}", err.to_string());
+        tracing::error!("callback_url call failed: {}", crate::utils::trunc(&m));
     }
 }
 
