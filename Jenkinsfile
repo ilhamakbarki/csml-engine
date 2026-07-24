@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE = "csml"
+        REGISTRY_HOST_LOCAL = credentials("DOCKER_REGISTRY_HOST_LOCAL")
         REGISTRY_HOST = credentials("DOCKER_REGISTRY_HOST")
         APPROVAL = credentials("APPROVAL_RELEASE")
         NOTIF_API_KEY = credentials('NOTIF_API_KEY')
@@ -11,14 +12,22 @@ pipeline {
             when { branch 'staging_beta' }
             steps {
                 script {
-                  def tagLatest = "${REGISTRY_HOST}/${DOCKER_IMAGE}:staging_beta-latest"
-                  def tagBuildNumber = "${REGISTRY_HOST}/${DOCKER_IMAGE}:staging_beta-${BUILD_NUMBER}"
+                  def imageTag = "staging_beta-${BUILD_NUMBER}"
+                  def cacheRef = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:buildcache-dev-latest"
+                  def tagBuilder = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:${imageTag}"
+                  def tagLatest = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:staging_beta-latest"
+                  def gitSha = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                  def buildTime = sh(script: "date -u +%Y-%m-%dT%H:%M:%SZ", returnStdout: true).trim()
 
                   echo 'Start Build Image Staging'
-                  sh "docker buildx build --platform linux/amd64,linux/arm64 -t ${tagLatest} -t ${tagBuildNumber} --push -f docker/sb.Dockerfile ."
+                  buildAndPush('docker/sb.Dockerfile', cacheRef,
+                    [tagBuilder, tagLatest],
+                    "--build-arg GIT_SHA=${gitSha} --build-arg BUILD_TIME=${buildTime}")
 
                   echo 'Start Deploy on Staging'
-                  sh "kubectl set image deployment csml csml=${tagBuildNumber} -n=csml-staging"
+                  def deployImage = "${REGISTRY_HOST}/${DOCKER_IMAGE}:${imageTag}"
+                  sh "kubectl set image deployment csml csml=${deployImage} -n=csml-staging"
+                  sh "kubectl rollout status deployment/csml -n=csml-staging --timeout=600s"
                 }
             }
         }
@@ -43,14 +52,22 @@ pipeline {
             when { tag "release-*" }
             steps {
                 script {
-                  def tagLatest = "${REGISTRY_HOST}/${DOCKER_IMAGE}:release-latest"
-                  def tagBuildNumber = "${REGISTRY_HOST}/${DOCKER_IMAGE}:${TAG_NAME}-${BUILD_NUMBER}"
+                  def imageTag = "${TAG_NAME}-${BUILD_NUMBER}"
+                  def cacheRef = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:buildcache-release-latest"
+                  def tagBuilder = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:${imageTag}"
+                  def tagLatest = "${REGISTRY_HOST_LOCAL}/${DOCKER_IMAGE}:release-latest"
+                  def gitSha = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                  def buildTime = sh(script: "date -u +%Y-%m-%dT%H:%M:%SZ", returnStdout: true).trim()
 
                   echo 'Start Build Image Production'
-                  sh "docker buildx build --platform linux/amd64 -t ${tagLatest} -t ${tagBuildNumber} --push -f docker/sb.Dockerfile ."
+                  buildAndPush('docker/sb.Dockerfile', cacheRef,
+                    [tagBuilder, tagLatest],
+                    "--build-arg GIT_SHA=${gitSha} --build-arg BUILD_TIME=${buildTime}")
 
                   echo 'Start Deploy on Production'
-                  sh "kubectl set image deployment csml csml=${tagBuildNumber} -n=csml-production"
+                  def deployImage = "${REGISTRY_HOST}/${DOCKER_IMAGE}:${imageTag}"
+                  sh "kubectl set image deployment csml csml=${deployImage} -n=csml-production"
+                  sh "kubectl rollout status deployment/csml -n=csml-production --timeout=600s"
                 }
             }
         }
@@ -112,4 +129,18 @@ def generateDockerBuildArgs(envContent) {
         }
     }
     return buildArgs.join(' ')
+}
+
+def buildAndPush(String dockerfile, String cacheRef, List tags, String extraArgs = '') {
+    def tagArgs = tags.collect { "-t ${it}" }.join(' ')
+    sh """
+        docker buildx build --platform linux/amd64 \\
+          --progress=plain \\
+          --output type=image,oci-mediatypes=true,push=true \\
+          --cache-from type=registry,ref=${cacheRef} \\
+          --cache-to   type=registry,ref=${cacheRef},mode=max,image-manifest=true,oci-mediatypes=true,ignore-error=true \\
+          --provenance=false --sbom=false \\
+          ${extraArgs} \\
+          ${tagArgs} -f ${dockerfile} .
+    """
 }
