@@ -4,10 +4,9 @@ use csml_engine::data::{RunRequest};
 use serde_json::{Value, json};
 use std::thread;
 use crate::routes::tools::validate_api_key;
-use tracing::{instrument, Span};
+use tracing::Span;
 
 #[post("/run")]
-#[instrument(name="POST /run")]
 pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -> HttpResponse {
   let mut request = body.event.to_owned();
 
@@ -36,6 +35,9 @@ pub async fn handler(body: web::Json<RunRequest>, req: actix_web::HttpRequest) -
   };
 
   let span = Span::current();
+  span.record("csml_request_id", crate::routes::tools::trunc(&body.event.request_id));
+  span.record("bot_id", crate::routes::tools::trunc(&body.event.client.bot_id));
+  span.record("channel_id", crate::routes::tools::trunc(&body.event.client.channel_id));
   let res = thread::spawn(move || {
     let _guard = span.entered();
     start_conversation(request, bot_opt)

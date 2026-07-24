@@ -35,6 +35,7 @@ fn format_messages(
     Ok(res)
 }
 
+#[tracing::instrument(name = "db.dynamo.message.write_batch", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "message", db.batch_size = messages.len() as i64))]
 pub fn write_messages_batch(
     messages: &[Message],
     db: &mut DynamoDbClient,
@@ -70,6 +71,7 @@ pub fn write_messages_batch(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.dynamo.message.add_bulk", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "message", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), direction = crate::utils::trunc(direction), db.batch_size = messages.len() as i64))]
 pub fn add_messages_bulk(
     data: &mut ConversationInfo,
     messages: &[serde_json::Value],
@@ -87,6 +89,7 @@ pub fn add_messages_bulk(
     write_messages_batch(&messages, db)
 }
 
+#[tracing::instrument(level = "debug", name = "db.dynamo.message.query", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "message", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit, db_paginated = pagination_key.is_some()))]
 fn query_messages(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -143,6 +146,7 @@ fn query_messages(
     Ok(data)
 }
 
+#[tracing::instrument(level = "debug", name = "db.dynamo.message.query_from_date", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "message", db.limit = limit, db_from_date = from_date, db_to_date = ?_to_date))]
 fn query_messages_from_date(
     db: &mut DynamoDbClient,
     range: String,
@@ -206,6 +210,7 @@ fn query_messages_from_date(
     Ok(data)
 }
 
+#[tracing::instrument(name = "db.dynamo.message.list", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "message", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_client_messages(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -293,6 +298,7 @@ pub fn get_client_messages(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.message.list_from_date", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "message", db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some(), db_from_date = from_date, db_to_date = ?to_date))]
 pub fn get_client_messages_from_date(
     db: &mut DynamoDbClient,
     limit: Option<i64>,
@@ -379,6 +385,7 @@ pub fn get_client_messages_from_date(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.message.delete_user", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "message", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_messages(client: &Client, db: &mut DynamoDbClient) -> Result<(), EngineError> {
     let mut pagination_key = None;
 

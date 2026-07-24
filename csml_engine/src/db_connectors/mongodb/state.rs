@@ -31,6 +31,7 @@ pub fn format_state_data(
     })
 }
 
+#[tracing::instrument(name = "db.mongo.state.delete_key", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_one", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
 pub fn delete_state_key(
     client: &Client,
     _type: &str,
@@ -49,6 +50,7 @@ pub fn delete_state_key(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.state.get_key", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
 pub fn get_state_key(
     client: &Client,
     _type: &str,
@@ -75,6 +77,7 @@ pub fn get_state_key(
     }
 }
 
+#[tracing::instrument(name = "db.mongo.state.get_current", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_current_state(
     client: &Client,
     db: &MongoDbClient,
@@ -107,6 +110,7 @@ pub fn get_current_state(
     }
 }
 
+#[tracing::instrument(name = "db.mongo.state.set_items", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "insert_many", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), db.batch_size = keys_values.len() as i64))]
 pub fn set_state_items(
     client: &Client,
     _type: &str,
@@ -125,6 +129,7 @@ pub fn set_state_items(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.state.delete_user", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_state(client: &Client, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("state");
 

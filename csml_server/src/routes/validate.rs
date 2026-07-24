@@ -2,7 +2,6 @@ use actix_web::{post, web, HttpResponse};
 use csml_engine::{validate_bot, CsmlResult};
 use csml_interpreter::data::csml_bot::CsmlBot;
 use serde::{Deserialize, Serialize};
-use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ValidateBotResponse {
@@ -30,8 +29,11 @@ struct ValidationError {
 }
 
 #[post("/validate")]
-#[instrument(name="POST /validate")]
 pub async fn handler(body: web::Json<CsmlBot>) -> HttpResponse {
+  let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&body.id));
+  span.record("flow_count", body.flows.len() as i64);
+
   let response = match validate_bot(body.clone()) {
 
     CsmlResult {

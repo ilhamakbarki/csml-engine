@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 use crate::db_connectors::dynamodb::utils::*;
 
+#[tracing::instrument(name = "db.dynamo.state.delete_key", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "DeleteItem", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
 pub fn delete_state_key(
     client: &Client,
     _type: &str,
@@ -32,6 +33,7 @@ pub fn delete_state_key(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.dynamo.state.get_key", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetItem", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
 pub fn get_state_key(
     client: &Client,
     _type: &str,
@@ -64,6 +66,7 @@ pub fn get_state_key(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.state.get_current", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetItem", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_current_state(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -116,6 +119,7 @@ fn format_state_data(
     Ok(vec)
 }
 
+#[tracing::instrument(name = "db.dynamo.state.set_items", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), db.batch_size = keys_values.len() as i64))]
 pub fn set_state_items(
     client: &Client,
     _type: &str,
@@ -156,6 +160,7 @@ pub fn set_state_items(
     Ok(())
 }
 
+#[tracing::instrument(level = "debug", name = "db.dynamo.state.query", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit))]
 fn query_states(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -211,6 +216,7 @@ fn query_states(
     Ok(data)
 }
 
+#[tracing::instrument(name = "db.dynamo.state.delete_user", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "state", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_state(client: &Client, db: &mut DynamoDbClient) -> Result<(), EngineError> {
     let mut pagination_key = None;
     let expr_attr_names: HashMap<String, String> = [

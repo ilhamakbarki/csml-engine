@@ -3,7 +3,6 @@ use csml_engine::{user_close_all_conversations, get_open_conversation, Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
-use tracing::{instrument};
 
 
 /**
@@ -11,7 +10,6 @@ use tracing::{instrument};
  * Otherwise, return nothing
  */
 #[post("/conversations/open")]
-#[instrument(name="POST /conversations/open")]
 pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
@@ -23,7 +21,11 @@ pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> H
     return HttpResponse::Forbidden().finish()
   }
 
+  let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&body.bot_id));
+  span.record("channel_id", crate::routes::tools::trunc(&body.channel_id));
   let res = thread::spawn(move || {
+    let _guard = span.entered();
     get_open_conversation(&body)
   }).join().unwrap();
 
@@ -43,7 +45,6 @@ pub async fn get_open(body: web::Json<Client>, req: actix_web::HttpRequest) -> H
  * Close any open conversation
  */
 #[post("/conversations/close")]
-#[instrument(name="POST /conversations/close")]
 pub async fn close_user_conversations(body: web::Json<Client>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
@@ -55,7 +56,11 @@ pub async fn close_user_conversations(body: web::Json<Client>, req: actix_web::H
     return HttpResponse::Forbidden().finish()
   }
 
+  let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&body.bot_id));
+  span.record("channel_id", crate::routes::tools::trunc(&body.channel_id));
   let res = thread::spawn(move || {
+    let _guard = span.entered();
     user_close_all_conversations(body.clone())
   }).join().unwrap();
 
@@ -82,7 +87,6 @@ pub struct GetClientInfoQuery {
  * List all the conversations of a given client
  */
 #[get("/conversations")]
-#[instrument(name="GET /conversations")]
 pub async fn get_client_conversations(query: web::Query<GetClientInfoQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {
@@ -107,7 +111,12 @@ pub async fn get_client_conversations(query: web::Query<GetClientInfoQuery>, req
     None => None,
   };
 
+  let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+  span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+  span.record("db.limit", query.limit.unwrap_or(0) as i64);
   let res = thread::spawn(move || {
+    let _guard = span.entered();
     csml_engine::get_client_conversations(&client, limit, pagination_key)
   }).join().unwrap();
 

@@ -13,3 +13,4 @@
 .idea
 docker-compose.yaml
 !docker/docker-compose.yaml
+/.claude

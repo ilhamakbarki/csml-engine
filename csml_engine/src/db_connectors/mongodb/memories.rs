@@ -32,6 +32,7 @@ fn format_memories(
     })
 }
 
+#[tracing::instrument(name = "db.mongo.memory.add_batch", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "insert_many", db.collection = "memory", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), db.batch_size = memories.len() as i64))]
 pub fn add_memories(
     data: &mut ConversationInfo,
     memories: &HashMap<String, Memory>,
@@ -50,6 +51,7 @@ pub fn add_memories(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.memory.create", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "insert_one", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(&key)))]
 pub fn create_client_memory(
     client: &Client,
     key: String,
@@ -73,6 +75,7 @@ pub fn create_client_memory(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.memory.get_all_internal", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn internal_use_get_memories(
     client: &Client,
     db: &MongoDbClient,
@@ -105,6 +108,7 @@ pub fn internal_use_get_memories(
     Ok(serde_json::json!(map))
 }
 
+#[tracing::instrument(name = "db.mongo.memory.get_all", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_memories(client: &Client, db: &MongoDbClient) -> Result<serde_json::Value, EngineError> {
     let collection = db.client.collection::<Document>("memory");
 
@@ -137,6 +141,7 @@ pub fn get_memories(client: &Client, db: &MongoDbClient) -> Result<serde_json::V
     Ok(serde_json::json!(vec))
 }
 
+#[tracing::instrument(name = "db.mongo.memory.get", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn get_memory(
     client: &Client,
     key: &str,
@@ -173,6 +178,7 @@ pub fn get_memory(
     }
 }
 
+#[tracing::instrument(name = "db.mongo.memory.delete", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn delete_client_memory(
     client: &Client,
     key: &str,
@@ -192,6 +198,7 @@ pub fn delete_client_memory(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.mongo.memory.delete_all", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = "memory", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_client_memories(client: &Client, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("memory");
 

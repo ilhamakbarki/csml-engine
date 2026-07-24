@@ -24,12 +24,45 @@ env_logger= "0.9"
 
 csml_engine = { path = "../csml_engine" }
 csml_interpreter = { path = "../csml_interpreter" }
-tracing-elastic-apm = "3.4.0"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["std", "fmt", "ansi", "smallvec", "env-filter"] }
 tracing = "0.1.41"
-uuid = "1.18.1"
-opentelemetry = "0.31.0"
-opentelemetry_sdk = "0.31.0"
+
+# OpenTelemetry / OTLP export to the Elastic APM Server's /v1/traces endpoint.
+#
+# WARNING: opentelemetry-otlp MUST keep `reqwest-blocking-client` and MUST NOT pull
+# `reqwest-client` or `hyper-client` (directly or through feature unification from any
+# other workspace member). The http client selection priority inside opentelemetry-otlp
+# is reqwest-client > hyper-client > reqwest-blocking-client; if an async client wins,
+# the batch span processor drives it with futures_executor::block_on on its own dedicated
+# OS thread, which has no reactor, and every export HANGS FOREVER.
+#
+# WARNING: `http-proto` (protobuf over HTTP), not `grpc-tonic` (needs a multi-thread tokio
+# runtime; we are on actix_rt's current-thread runtime) and not `http-json` (apm-server 400s).
+opentelemetry = "0.32"
+opentelemetry_sdk = "0.32.1"
+opentelemetry-otlp = { version = "0.32", default-features = false, features = ["trace", "http-proto", "reqwest-blocking-client", "internal-logs"] }
+
+# TLS for the OTLP exporter. This entry is NOT dead weight: both opentelemetry-otlp and
+# opentelemetry-http declare reqwest with `default-features = false`, and
+# `reqwest-blocking-client` only turns on `reqwest/blocking` -- it enables NO TLS backend at
+# all. Without a TLS feature reqwest builds a plain HTTP connector and every POST to an
+# `https://` apm-server fails at connect time ("invalid URL, scheme is not http"), so the
+# exporter would be silently dead against Elastic Cloud or any TLS-terminated apm-server.
+# Cargo feature unification adds this to the very same reqwest the exporter uses.
+#
+# `native-tls` and NOT otlp's `reqwest-rustls` (which maps to `reqwest/default-tls` =
+# rustls + rustls-platform-verifier): that path drags in rustls 0.23 / subtle >=2.5 /
+# security-framework 3, which cannot be resolved against this workspace's locked
+# digest 0.10.3 (`subtle = "=2.4"`) and native-tls 0.2.10 (security-framework-sys 2.6.1)
+# under `resolver = "1"`. native-tls 0.2.x is ALREADY in the lock via
+# csml_interpreter -> lettre, so OpenSSL is already a build/runtime requirement of this
+# binary and nothing new is imposed on the images.
+#
+# Adding it here does not change the client SELECTION above: it enables reqwest's own
+# `native-tls` feature, not opentelemetry-otlp's `reqwest-client`.
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "native-tls"] }
+tracing-opentelemetry = "0.33"
+tracing-actix-web = { version = "0.7.22", features = ["opentelemetry_0_32"] }
 
 [patch.crates-io]
 memchr = { version = "2.7.6" }

@@ -12,6 +12,7 @@ use super::{
     pagination::*
 };
 
+#[tracing::instrument(name = "db.pg.conversation.create", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "insert", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
 pub fn create_conversation(
     flow_id: &str,
     step_id: &str,
@@ -37,6 +38,7 @@ pub fn create_conversation(
     Ok(conversation.id.to_string())
 }
 
+#[tracing::instrument(name = "db.pg.conversation.close", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "update", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&_client.bot_id), channel_id = crate::utils::trunc(&_client.channel_id), status = crate::utils::trunc(status)))]
 pub fn close_conversation(
     id: &str,
     _client: &Client,
@@ -55,6 +57,7 @@ pub fn close_conversation(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.conversation.close_all", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "update", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_all_conversations(client: &Client, db: &PostgresqlClient) -> Result<(), EngineError> {
     diesel::update(
         csml_conversations::table
@@ -68,6 +71,7 @@ pub fn close_all_conversations(client: &Client, db: &PostgresqlClient) -> Result
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.conversation.get_latest_open", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "select", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_latest_open(
     client: &Client,
     db: &PostgresqlClient,
@@ -105,6 +109,7 @@ pub fn get_latest_open(
     }
 }
 
+#[tracing::instrument(name = "db.pg.conversation.update", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "update", db.collection = "csml_conversations", flow_id = ?flow_id, step_id = ?step_id))]
 pub fn update_conversation(
     conversation_id: &str,
     flow_id: Option<String>,
@@ -148,6 +153,7 @@ pub fn update_conversation(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.conversation.delete_user", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "delete", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_conversations(client: &Client, db: &PostgresqlClient) -> Result<(), EngineError> {
     diesel::delete(csml_conversations::table
         .filter(csml_conversations::bot_id.eq(&client.bot_id))
@@ -158,6 +164,7 @@ pub fn delete_user_conversations(client: &Client, db: &PostgresqlClient) -> Resu
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.conversation.list", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "select", db.collection = "csml_conversations", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_client_conversations(
     client: &Client,
     db: &PostgresqlClient,
@@ -216,6 +223,7 @@ pub fn get_client_conversations(
     }
 }
 
+#[tracing::instrument(name = "db.pg.conversation.delete_all_bot_data", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "delete", db.collection = "csml_conversations", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     db: &PostgresqlClient,

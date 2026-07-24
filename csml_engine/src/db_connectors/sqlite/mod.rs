@@ -18,6 +18,7 @@ use diesel::prelude::*;
 
 embed_migrations!("migrations/sqlite");
 
+#[tracing::instrument(name = "db.sqlite.setup.init", skip_all, fields(otel.kind = "client", db.system = "sqlite"))]
 pub fn init() -> Result<Database, EngineError> {
 
     let uri = match std::env::var("SQLITE_URL") {
@@ -34,6 +35,7 @@ pub fn init() -> Result<Database, EngineError> {
     Ok(db)
 }
 
+#[tracing::instrument(name = "db.sqlite.setup.migrate", skip_all, fields(otel.kind = "client", db.system = "sqlite"))]
 pub fn make_migrations() -> Result<(), EngineError> {
     let uri = match std::env::var("SQLITE_URL") {
         Ok(var) => var,

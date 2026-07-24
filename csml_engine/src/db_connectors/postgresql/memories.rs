@@ -15,6 +15,7 @@ use super::{
 use chrono::{NaiveDateTime};
 use std::collections::HashMap;
 
+#[tracing::instrument(name = "db.pg.memory.add_batch", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "insert", db.collection = "csml_memories", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), db.batch_size = memories.len() as i64))]
 pub fn add_memories(
     data: &mut ConversationInfo,
     memories: &HashMap<String, Memory>,
@@ -33,6 +34,7 @@ pub fn add_memories(
     Ok(())
 }
 
+#[tracing::instrument(level = "debug", name = "db.pg.memory.create", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "insert", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn create_client_memory(
     client: &Client,
     key: &str,
@@ -63,6 +65,7 @@ pub fn create_client_memory(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.memory.get_all_internal", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "select", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn internal_use_get_memories(
     client: &Client,
     db: &PostgresqlClient
@@ -84,6 +87,7 @@ pub fn internal_use_get_memories(
     Ok(serde_json::json!(map))
 }
 
+#[tracing::instrument(name = "db.pg.memory.get_all", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "select", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_memories(
     client: &Client,
     db: &PostgresqlClient
@@ -109,6 +113,7 @@ pub fn get_memories(
     Ok(serde_json::json!(vec))
 }
 
+#[tracing::instrument(name = "db.pg.memory.get", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "select", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn get_memory(
     client: &Client,
     key: &str,
@@ -132,6 +137,7 @@ pub fn get_memory(
     Ok(serde_json::json!(memory))
 }
 
+#[tracing::instrument(name = "db.pg.memory.delete", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "delete", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), memory_key = crate::utils::trunc(key)))]
 pub fn delete_client_memory(
     client: &Client,
     key: &str,
@@ -148,6 +154,7 @@ pub fn delete_client_memory(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.memory.delete_all", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "delete", db.collection = "csml_memories", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_client_memories(
     client: &Client,
     db: &PostgresqlClient
@@ -161,6 +168,7 @@ pub fn delete_client_memories(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.pg.memory.delete_all_bot_data", skip_all, fields(otel.kind = "client", db.system = "postgresql", db.operation = "delete", db.collection = "csml_memories", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     db: &PostgresqlClient,

@@ -3,7 +3,6 @@ use actix_web::{delete, get, post, web, HttpResponse};
 use csml_interpreter::data::Client;
 use serde::{Deserialize, Serialize};
 use std::thread;
-use tracing::{instrument};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MemoryKeyPath {
@@ -30,7 +29,6 @@ pub struct Memory {
  *
  */
 #[post("/memories")]
-#[instrument(name="POST /memories")]
 pub async fn create_client_memory(
     query: web::Query<ClientQuery>,
     body: web::Json<Memory>,
@@ -50,7 +48,12 @@ pub async fn create_client_memory(
         return HttpResponse::Forbidden().finish();
     }
 
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&body.key));
     let res = thread::spawn(move || {
+        let _guard = span.entered();
         csml_engine::create_client_memory(&client, body.key.to_owned(), body.value.to_owned())
     })
     .join()
@@ -73,7 +76,6 @@ pub async fn create_client_memory(
  *
  */
 #[delete("/memories/{key}")]
-#[instrument(name="DELETE /memories/:key")]
 pub async fn delete_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -95,9 +97,16 @@ pub async fn delete_memory(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || csml_engine::delete_client_memory(&client, &memory_key))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&path.key));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        csml_engine::delete_client_memory(&client, &memory_key)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(_) => HttpResponse::NoContent().finish(),
@@ -116,7 +125,6 @@ pub async fn delete_memory(
  *
  */
 #[delete("/memories")]
-#[instrument(name="DELETE /memories")]
 pub async fn delete_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -135,9 +143,15 @@ pub async fn delete_memories(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || csml_engine::delete_client_memories(&client))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        csml_engine::delete_client_memories(&client)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(_) => HttpResponse::NoContent().finish(),
@@ -154,7 +168,6 @@ pub async fn delete_memories(
  *
  */
 #[get("/memories/{key}")]
-#[instrument(name="GET /memories/:key")]
 pub async fn get_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -176,9 +189,16 @@ pub async fn get_memory(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || csml_engine::get_client_memory(&client, &memory_key))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&path.key));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        csml_engine::get_client_memory(&client, &memory_key)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(memory) => HttpResponse::Ok().json(memory),
@@ -195,7 +215,6 @@ pub async fn get_memory(
 *
 */
 #[get("/memories")]
-#[instrument(name="GET /memories")]
 pub async fn get_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -214,9 +233,15 @@ pub async fn get_memories(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || csml_engine::get_client_memories(&client))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        csml_engine::get_client_memories(&client)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(memory) => HttpResponse::Ok().json(memory),

@@ -11,7 +11,18 @@ const MAX_BODY_SIZE: usize = 8_388_608; // 8MB
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    let _ = apm::init_apm();
+    let apm_guard = match apm::init_apm() {
+        Ok(guard) => guard,
+        Err(err) => {
+            eprintln!("⚠️ APM init failed: {}", err);
+            None
+        }
+    };
+    // init_logger() stays UNCONDITIONAL: csml_engine calls it internally from ~19 public
+    // entry points (csml_engine/src/lib.rs:67, 193, 200, ... 461), so skipping it here
+    // would change nothing except lose the module suppressions in csml_logs.rs:92-96 on
+    // the first request. When tracing-log is absent this simply succeeds as before; when
+    // present it fails harmlessly and apm.rs has already capped the bridge.
     init_logger();
 
     let server_port: String = match std::env::var("ENGINE_SERVER_PORT") {
@@ -26,7 +37,7 @@ async fn main() -> std::io::Result<()> {
         Err(err) => panic!("PgSQL Migration ERROR: {:?}", err),
     };
 
-    HttpServer::new(|| {
+    let server_result = HttpServer::new(|| {
         App::new()
             .wrap(
                 Cors::default()
@@ -40,6 +51,21 @@ async fn main() -> std::io::Result<()> {
                     .max_age(86_400), //24h
             )
             .wrap(middleware::Logger::default())
+            // Middleware ORDER: actix-web executes `wrap`ped middleware in REVERSE
+            // registration order, so the LAST `.wrap(...)` is the OUTERMOST one.
+            // TracingLogger is registered last on purpose, which makes its "HTTP request"
+            // root span wrap Cors and middleware::Logger rather than sit inside them:
+            //   (a) the transaction duration reported to APM is the real wall-clock time
+            //       the client waited, not just handler time;
+            //   (b) CORS preflights and any response Cors short-circuits are still
+            //       recorded as transactions instead of vanishing;
+            //   (c) every log line emitted by the inner middleware and by the handlers is
+            //       emitted inside the span, so it carries the trace context;
+            //   (d) the inbound W3C `traceparent` is extracted before anything else
+            //       touches the request.
+            // NOTE: it is registered directly on `App`, NOT inside a `web::scope`; inside a
+            // scope it would have to be wrapped in `actix_web::middleware::Compat`.
+            .wrap(tracing_actix_web::TracingLogger::<apm::CsmlRootSpanBuilder>::new())
             .app_data(web::JsonConfig::default().limit(MAX_BODY_SIZE))
             .service(fs::Files::new("/static", "./static").use_last_modified(true))
             .service(routes::index::home)
@@ -69,5 +95,15 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(format!("0.0.0.0:{}", server_port))?
     .run()
-    .await
+    .await;
+
+    if let Some(guard) = apm_guard {
+        // Deterministic drain, replacing the old best-effort 2s sleep: shutdown() flushes
+        // the BatchSpanProcessor and joins its exporter thread, so the final batch is
+        // actually delivered on every rolling deploy. This is REQUIRED, not optional --
+        // global::set_tracer_provider holds a clone forever, so Drop never runs.
+        guard.shutdown();
+    }
+
+    server_result
 }

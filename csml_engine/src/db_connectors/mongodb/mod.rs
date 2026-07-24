@@ -38,6 +38,7 @@ fn create_mongodb_uri() -> Result<String, EngineError> {
     Ok(uri)
 }
 
+#[tracing::instrument(name = "db.mongo.setup.init", skip_all, fields(otel.kind = "client", db.system = "mongodb"))]
 pub fn init() -> Result<Database, EngineError> {
     let dbname = match std::env::var("MONGODB_DATABASE") {
         Ok(var) => var,
@@ -87,6 +88,7 @@ pub fn get_pagination_key(pagination_key: Option<String>) -> Result<Option<Strin
     }
 }
 
+#[tracing::instrument(name = "db.mongo.setup.create_ttl_indexes", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "create_index"))]
 fn create_ttl_indexes(
     db: &MongoDbClient,
 ) {
@@ -141,6 +143,7 @@ fn create_ttl_indexes(
     state.create_index(index,None).ok();
 }
 
+#[tracing::instrument(name = "db.mongo.setup.create_client_indexes", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "create_index"))]
 fn create_client_indexes(
     db: &MongoDbClient,
 ) {

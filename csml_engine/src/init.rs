@@ -35,6 +35,7 @@ use std::collections::HashMap;
  * This method takes care of the initialization of the data as well as setting up
  * some information in the database (conversation_id, metadata, state...).
  */
+#[tracing::instrument(name = "engine.conversation.init_info", skip_all)]
 pub fn init_conversation_info<'a>(
     default_flow: String,
     event: &Event,
@@ -99,6 +100,7 @@ pub fn init_conversation_info<'a>(
 /**
  * Initialize the bot
  */
+#[tracing::instrument(name = "engine.bot.init", skip_all, fields(bot_id = crate::utils::trunc(&bot.id), flow_count = bot.flows.len() as i64))]
 pub fn init_bot(bot: &mut CsmlBot) -> Result<(), EngineError> {
     // load native components into the bot
     bot.native_components = match load_components() {
@@ -116,6 +118,7 @@ pub fn init_bot(bot: &mut CsmlBot) -> Result<(), EngineError> {
 /**
  * Initialize bot ast
  */
+#[tracing::instrument(name = "engine.bot.set_ast", skip_all)]
 fn set_bot_ast(bot: &mut CsmlBot) -> Result<(), EngineError> {
     match validate_bot(&bot) {
         CsmlResult {
@@ -158,6 +161,7 @@ fn set_bot_ast(bot: &mut CsmlBot) -> Result<(), EngineError> {
 /**
  * Initialize the context object for incoming requests
  */
+#[tracing::instrument(name = "engine.context.init", skip_all)]
 pub fn init_context(
     flow: String,
     client: Client,
@@ -185,6 +189,7 @@ pub fn init_context(
     }
 }
 
+#[tracing::instrument(name = "engine.bot.get_previous", skip_all)]
 fn get_previous_bot(client: &Client, db: &mut Database) -> Option<PreviousBot> {
     match state::get_state_key(client, "bot", "previous", db) {
         Ok(Some(bot)) => serde_json::from_value(bot).ok(),
@@ -195,6 +200,7 @@ fn get_previous_bot(client: &Client, db: &mut Database) -> Option<PreviousBot> {
 /**
  * Retrieve the current conversation, or create one if none exists.
  */
+#[tracing::instrument(name = "engine.conversation.get_or_create", skip_all)]
 fn get_or_create_conversation<'a>(
     context: &mut Context,
     bot: &'a CsmlBot,
@@ -237,6 +243,7 @@ fn get_or_create_conversation<'a>(
 /**
  * Create and save a new conversation in DB
  */
+#[tracing::instrument(name = "engine.conversation.create_new", skip_all)]
 fn create_new_conversation<'a>(
     context: &mut Context,
     bot: &'a CsmlBot,
@@ -261,6 +268,7 @@ fn create_new_conversation<'a>(
 /**
  * Switch bot find next bot in DB and create new Client and new conversation
  */
+#[tracing::instrument(name = "engine.switch_bot", skip_all)]
 pub fn switch_bot(
     data: &mut ConversationInfo,
     bot: &mut CsmlBot,

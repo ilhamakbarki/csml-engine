@@ -34,6 +34,14 @@ pub struct SwitchBot {
  * A request came in and should be handled. Once the ConversationInfo is correctly setup,
  * this step is called in a loop until a `hold` or `goto end` is reached.
  */
+#[tracing::instrument(
+    name = "engine.interpret_step",
+    skip_all,
+    fields(
+        bot_id = crate::utils::trunc(&bot.id),
+        conversation_id = crate::utils::trunc(&data.conversation_id),
+    )
+)]
 pub fn interpret_step(
     data: &mut ConversationInfo,
     event: Event,
@@ -68,7 +76,12 @@ pub fn interpret_step(
         LogLvl::Debug,
     );
     let new_bot = bot.clone();
+    let interpreter_span = tracing::info_span!(
+        "engine.interpreter.run",
+        bot_id = crate::utils::trunc(&bot.id)
+    );
     thread::spawn(move || {
+        let _guard = interpreter_span.entered();
         interpret(new_bot, context, event, Some(sender));
     });
 
@@ -256,6 +269,7 @@ pub fn interpret_step(
     ))
 }
 
+#[tracing::instrument(name = "engine.switch_bot.manage", skip_all)]
 fn manage_switch_bot<'a>(
     data: &mut ConversationInfo,
     interaction_order: &mut i32,
@@ -524,6 +538,7 @@ fn manage_internal_goto<'a>(
 /**
  * CSML `goto flow` action
  */
+#[tracing::instrument(name = "engine.goto.flow", skip_all)]
 fn goto_flow<'a>(
     data: &mut ConversationInfo,
     interaction_order: &mut i32,
@@ -550,6 +565,7 @@ fn goto_flow<'a>(
 /**
  * CSML `goto step` action
  */
+#[tracing::instrument(name = "engine.goto.step", skip_all)]
 fn goto_step<'a>(
     data: &mut ConversationInfo,
     conversation_end: &mut bool,

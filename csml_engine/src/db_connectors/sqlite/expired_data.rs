@@ -11,6 +11,7 @@ use super::{
     }
 };
 
+#[tracing::instrument(name = "db.sqlite.setup.delete_expired", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete"))]
 pub fn delete_expired_data(
     db: &SqliteClient,
 ) -> Result<(), EngineError> {

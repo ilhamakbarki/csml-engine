@@ -13,6 +13,7 @@ use crate::db_connectors::{state, utils::*};
 use crate::error_messages::ERROR_DB_SETUP;
 use crate::{Client, ConversationInfo, Database, DbConversation, EngineError};
 
+#[tracing::instrument(name = "db.conversation.create", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "insert", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
 pub fn create_conversation(
     flow_id: &str,
     step_id: &str,
@@ -85,6 +86,7 @@ pub fn create_conversation(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.conversation.close", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "update", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_conversation(id: &str, client: &Client, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(
@@ -135,6 +137,7 @@ pub fn close_conversation(id: &str, client: &Client, db: &mut Database) -> Resul
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.conversation.close_all", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "update", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_all_conversations(client: &Client, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(None, None, None, format!("db call close all conversations")),
@@ -177,6 +180,7 @@ pub fn close_all_conversations(client: &Client, db: &mut Database) -> Result<(),
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.conversation.get_latest_open", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_latest_open(
     client: &Client,
     db: &mut Database,
@@ -227,6 +231,7 @@ pub fn get_latest_open(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.conversation.update", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "update", bot_id = crate::utils::trunc(&data.client.bot_id), channel_id = crate::utils::trunc(&data.client.channel_id), flow_id = ?flow_id, step_id = ?step_id))]
 pub fn update_conversation(
     data: &mut ConversationInfo,
     flow_id: Option<String>,
@@ -306,6 +311,7 @@ pub fn update_conversation(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
+#[tracing::instrument(name = "db.conversation.list", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_client_conversations(
     client: &Client,
     db: &mut Database,

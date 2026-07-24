@@ -1,6 +1,6 @@
 use actix_web::{get, HttpResponse};
 use std::thread;
-use tracing::{instrument, Span};
+use tracing::Span;
 
 /*
 * Get Server status
@@ -9,7 +9,6 @@ use tracing::{instrument, Span};
 *
 */
 #[get("/status")]
-#[instrument(name="GET /status")]
 pub async fn get_status() -> HttpResponse {
     let span = Span::current();
     let res = thread::spawn(move || {

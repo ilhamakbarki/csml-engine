@@ -13,6 +13,7 @@ use super::{
 
 use std::env;
 
+#[tracing::instrument(name = "db.sqlite.bot.create_version", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "insert", db.collection = "cmsl_bot_versions", bot_id = crate::utils::trunc(&bot_id)))]
 pub fn create_bot_version(
     bot_id: String,
     bot: String,
@@ -34,6 +35,7 @@ pub fn create_bot_version(
     Ok(id.to_string())
 }
 
+#[tracing::instrument(name = "db.sqlite.bot.list_versions", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "select", db.collection = "cmsl_bot_versions", bot_id = crate::utils::trunc(bot_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_bot_versions(
     bot_id: &str,
     limit: Option<i64>,
@@ -91,6 +93,7 @@ pub fn get_bot_versions(
     }
 }
 
+#[tracing::instrument(name = "db.sqlite.bot.get_by_version_id", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "select", db.collection = "cmsl_bot_versions", version_id = crate::utils::trunc(id)))]
 pub fn get_bot_by_version_id(
     id: &str,
     db: &SqliteClient,
@@ -115,6 +118,7 @@ pub fn get_bot_by_version_id(
     }
 }
 
+#[tracing::instrument(name = "db.sqlite.bot.get_last_version", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "select", db.collection = "cmsl_bot_versions", bot_id = crate::utils::trunc(bot_id)))]
 pub fn get_last_bot_version(
     bot_id: &str,
     db: &SqliteClient,
@@ -138,6 +142,7 @@ pub fn get_last_bot_version(
     }
 }
 
+#[tracing::instrument(name = "db.sqlite.bot.delete_version", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete", db.collection = "cmsl_bot_versions", version_id = crate::utils::trunc(version_id)))]
 pub fn delete_bot_version(
     version_id: &str,
     db: &SqliteClient
@@ -155,6 +160,7 @@ pub fn delete_bot_version(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.sqlite.bot.delete_versions", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete", db.collection = "cmsl_bot_versions", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_bot_versions(bot_id: &str, db: &SqliteClient) -> Result<(), EngineError> {
     diesel::delete(
         cmsl_bot_versions::table

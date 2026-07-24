@@ -7,7 +7,6 @@ use csml_engine::{
 use csml_interpreter::data::csml_bot::CsmlBot;
 use serde::{Deserialize, Serialize};
 use std::thread;
-use tracing::{instrument};
 
 /**
  * fold bot into a single flow
@@ -16,7 +15,6 @@ use tracing::{instrument};
  *
  */
 #[post("/bots/fold")]
-#[instrument(name="POST /bots/fold")]
 pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest) -> HttpResponse {
     let bot = body.to_owned();
 
@@ -29,7 +27,15 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || fold_bot(bot)).join().unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&body.id));
+    span.record("flow_count", body.flows.len() as i64);
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        fold_bot(bot)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(flow) => HttpResponse::Created().json(serde_json::json!({ "flow": flow })),
@@ -48,7 +54,6 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
  *
  */
 #[post("/bots")]
-#[instrument(name="POST /bots")]
 pub async fn add_bot_version(
     body: web::Json<CsmlBot>,
     req: actix_web::HttpRequest,
@@ -64,9 +69,15 @@ pub async fn add_bot_version(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || create_bot_version(bot))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&body.id));
+    span.record("flow_count", body.flows.len() as i64);
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        create_bot_version(bot)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(data) => HttpResponse::Created().json(serde_json::json!(data)),
@@ -105,7 +116,6 @@ pub struct GetBotVersionsQuery {
  * }
  */
 #[get("/bots/{bot_id}")]
-#[instrument(name="GET /bots/:bot_id")]
 pub async fn get_bot_latest_version(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -121,9 +131,14 @@ pub async fn get_bot_latest_version(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || get_last_bot_version(&bot_id))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        get_last_bot_version(&bot_id)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(Some(bot_version)) => HttpResponse::Ok().json(bot_version.flatten()),
@@ -142,7 +157,6 @@ pub async fn get_bot_latest_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}")]
-#[instrument(name="DELETE /bots/:bot_id")]
 pub async fn delete_bot_versions(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -158,9 +172,14 @@ pub async fn delete_bot_versions(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || delete_all_bot_versions(&bot_id))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        delete_all_bot_versions(&bot_id)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(_) => HttpResponse::NoContent().finish(),
@@ -189,7 +208,6 @@ pub async fn delete_bot_versions(
  * }
  */
 #[get("/bots/{bot_id}/versions")]
-#[instrument(name="GET /bots/:bot_id/versions")]
 pub async fn get_bot_latest_versions(
     path: web::Path<BotIdPath>,
     query: web::Query<GetBotVersionsQuery>,
@@ -212,9 +230,15 @@ pub async fn get_bot_latest_versions(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || get_bot_versions(&bot_id, limit, pagination_key))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("db.limit", query.limit.unwrap_or(0) as i64);
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        get_bot_versions(&bot_id, limit, pagination_key)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(data) => HttpResponse::Ok().json(data),
@@ -248,7 +272,6 @@ pub struct BotVersionPath {
  * }
  */
 #[get("/bots/{bot_id}/versions/{version_id}")]
-#[instrument(name="GET /bots/:bot_id/versions/:version_id")]
 pub async fn get_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -265,9 +288,15 @@ pub async fn get_bot_version(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || get_bot_by_version_id(&version_id, &bot_id))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("version_id", crate::routes::tools::trunc(&path.version_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        get_bot_by_version_id(&version_id, &bot_id)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(Some(bot_version)) => HttpResponse::Ok().json(bot_version.flatten()),
@@ -286,7 +315,6 @@ pub async fn get_bot_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}/versions/{version_id}")]
-#[instrument(name="DELETE /bots/:bot_id/versions/:version_id")]
 pub async fn delete_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -303,9 +331,15 @@ pub async fn delete_bot_version(
         return HttpResponse::Forbidden().finish();
     }
 
-    let res = thread::spawn(move || delete_bot_version_id(&version_id, &bot_id))
-        .join()
-        .unwrap();
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("version_id", crate::routes::tools::trunc(&path.version_id));
+    let res = thread::spawn(move || {
+        let _guard = span.entered();
+        delete_bot_version_id(&version_id, &bot_id)
+    })
+    .join()
+    .unwrap();
 
     match res {
         Ok(_) => HttpResponse::NoContent().finish(),

@@ -11,6 +11,7 @@ use crate::db_connectors::{is_sqlite, sqlite_connector};
 use crate::error_messages::ERROR_DB_SETUP;
 use crate::{Database, EngineError};
 
+#[tracing::instrument(name = "db.setup.delete_expired", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "delete"))]
 pub fn delete_expired_data(_db: &mut Database) -> Result<(), EngineError> {
 
     #[cfg(feature = "mongo")]

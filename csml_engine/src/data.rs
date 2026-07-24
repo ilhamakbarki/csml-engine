@@ -28,6 +28,7 @@ pub struct RunRequest {
 }
 
 impl RunRequest {
+    #[tracing::instrument(name = "engine.bot.get_opt", skip_all)]
     pub fn get_bot_opt(&self) -> Result<BotOpt, EngineError> {
         match self.clone() {
             // Bot
@@ -94,6 +95,7 @@ pub enum BotOpt {
 }
 
 impl BotOpt {
+    #[tracing::instrument(name = "engine.bot.search", skip_all)]
     pub fn search_bot(&self, db: &mut Database) -> Result<CsmlBot, EngineError> {
         match self {
             BotOpt::CsmlBot(csml_bot) => Ok(csml_bot.to_owned()),

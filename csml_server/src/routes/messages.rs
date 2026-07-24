@@ -3,7 +3,6 @@ use csml_interpreter::data::{Client};
 use serde::{Deserialize, Serialize};
 use std::thread;
 use crate::routes::tools::validate_api_key;
-use tracing::{instrument};
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,7 +25,6 @@ pub struct GetClientInfoQuery {
  * List all the messages a client has ever exchanged with the chatbot
  */
 #[get("/messages")]
-#[instrument(name="GET /messages")]
 pub async fn get_client_messages(query: web::Query<GetClientInfoQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
     let client = Client {
@@ -53,7 +51,12 @@ pub async fn get_client_messages(query: web::Query<GetClientInfoQuery>, req: act
         return HttpResponse::Forbidden().finish()
     }
 
+    let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("db.limit", query.limit.unwrap_or(0) as i64);
     let res = thread::spawn(move || {
+        let _guard = span.entered();
         csml_engine::get_client_messages(&client, limit, pagination_key, from_date, to_date)
     }).join().unwrap();
 

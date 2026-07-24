@@ -9,6 +9,7 @@ use csml_interpreter::data::{csml_bot::Module, csml_flow::CsmlFlow};
 use rusoto_dynamodb::*;
 use std::collections::HashMap;
 
+#[tracing::instrument(name = "db.dynamo.bot.create_version", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "PutItem", db.collection = "bot", bot_id = crate::utils::trunc(&bot_id)))]
 pub fn create_bot_version(
     bot_id: String,
     bot: String,
@@ -40,6 +41,7 @@ pub fn create_bot_version(
     Ok(data.version_id.to_owned())
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.get_flows", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetObject", s3_key = crate::utils::trunc(key)))]
 pub fn get_flows(key: &str, db: &mut DynamoDbClient) -> Result<Vec<CsmlFlow>, EngineError> {
     let object = aws_s3::get_object(db, key)?;
     let flows: Vec<CsmlFlow> = match serde_json::from_str(&object) {
@@ -50,6 +52,7 @@ pub fn get_flows(key: &str, db: &mut DynamoDbClient) -> Result<Vec<CsmlFlow>, En
     Ok(flows)
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.get_modules", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetObject", s3_key = crate::utils::trunc(key)))]
 pub fn get_modules(key: &str, db: &mut DynamoDbClient) -> Result<Vec<Module>, EngineError> {
     let object = match aws_s3::get_object(db, key) {
         Ok(obj) => obj,
@@ -64,6 +67,7 @@ pub fn get_modules(key: &str, db: &mut DynamoDbClient) -> Result<Vec<Module>, En
     Ok(modules)
 }
 
+#[tracing::instrument(level = "debug", name = "db.dynamo.bot.query_versions", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "bot", bot_id = crate::utils::trunc(bot_id), db.limit = limit, db_paginated = pagination_key.is_some()))]
 fn query_bot_version(
     bot_id: &str,
     limit: i64,
@@ -124,6 +128,7 @@ fn query_bot_version(
     Ok(data)
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.list_versions", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "bot", bot_id = crate::utils::trunc(bot_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_bot_versions(
     bot_id: &str,
     limit: Option<i64>,
@@ -189,6 +194,7 @@ pub fn get_bot_versions(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.get_by_version_id", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetItem", db.collection = "bot", bot_id = crate::utils::trunc(bot_id), version_id = crate::utils::trunc(version_id)))]
 pub fn get_bot_by_version_id(
     version_id: &str,
     bot_id: &str,
@@ -238,6 +244,7 @@ pub fn get_bot_by_version_id(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.get_last_version", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
 pub fn get_last_bot_version(
     bot_id: &str,
     db: &mut DynamoDbClient,
@@ -352,6 +359,7 @@ pub fn get_last_bot_version(
     }
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.delete_version", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "DeleteItem", db.collection = "bot", bot_id = crate::utils::trunc(bot_id), version_id = crate::utils::trunc(version_id)))]
 pub fn delete_bot_version(
     bot_id: &str,
     version_id: &str,
@@ -380,6 +388,7 @@ pub fn delete_bot_version(
     Ok(())
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.delete_versions", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_bot_versions(bot_id: &str, db: &mut DynamoDbClient) -> Result<(), EngineError> {
     let mut pagination_key = None;
 
@@ -438,6 +447,7 @@ pub fn delete_bot_versions(bot_id: &str, db: &mut DynamoDbClient) -> Result<(), 
     }
 }
 
+#[tracing::instrument(level = "debug", name = "db.dynamo.bot.query_info", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = crate::utils::trunc(class), bot_id = crate::utils::trunc(bot_id), db.limit = limit))]
 fn query_bot_info(
     bot_id: &str,
     class: &str,
@@ -499,6 +509,7 @@ fn query_bot_info(
     Ok(data)
 }
 
+#[tracing::instrument(name = "db.dynamo.bot.delete_all_data", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = crate::utils::trunc(class), bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     class: &str,
