@@ -29,8 +29,11 @@ struct ValidationError {
 }
 
 #[post("/validate")]
-#[tracing::instrument(name="POST /validate", skip_all, fields(bot_id = crate::routes::tools::trunc(&body.id), flow_count = body.flows.len() as i64))]
 pub async fn handler(body: web::Json<CsmlBot>) -> HttpResponse {
+  let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&body.id));
+  span.record("flow_count", body.flows.len() as i64);
+
   let response = match validate_bot(body.clone()) {
 
     CsmlResult {

@@ -106,7 +106,6 @@ async fn handle_notification(body: &str) -> HttpResponse {
  * has been properly confirmed.
  */
 #[post("/sns")]
-#[tracing::instrument(name="POST /sns", skip_all)]
 pub async fn handler(req: HttpRequest, body: web::Bytes) -> HttpResponse {
     let body_string = match std::str::from_utf8(&body) {
         Ok(res) => res,

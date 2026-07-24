@@ -9,7 +9,6 @@ use tracing::Span;
 *
 */
 #[get("/status")]
-#[tracing::instrument(name="GET /status", skip_all)]
 pub async fn get_status() -> HttpResponse {
     let span = Span::current();
     let res = thread::spawn(move || {

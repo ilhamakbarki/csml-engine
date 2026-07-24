@@ -65,7 +65,7 @@ async fn main() -> std::io::Result<()> {
             //       touches the request.
             // NOTE: it is registered directly on `App`, NOT inside a `web::scope`; inside a
             // scope it would have to be wrapped in `actix_web::middleware::Compat`.
-            .wrap(tracing_actix_web::TracingLogger::default())
+            .wrap(tracing_actix_web::TracingLogger::<apm::CsmlRootSpanBuilder>::new())
             .app_data(web::JsonConfig::default().limit(MAX_BODY_SIZE))
             .service(fs::Files::new("/static", "./static").use_last_modified(true))
             .service(routes::index::home)

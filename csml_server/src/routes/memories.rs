@@ -29,7 +29,6 @@ pub struct Memory {
  *
  */
 #[post("/memories")]
-#[tracing::instrument(name="POST /memories", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id), memory_key = crate::routes::tools::trunc(&body.key)))]
 pub async fn create_client_memory(
     query: web::Query<ClientQuery>,
     body: web::Json<Memory>,
@@ -50,6 +49,9 @@ pub async fn create_client_memory(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&body.key));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::create_client_memory(&client, body.key.to_owned(), body.value.to_owned())
@@ -74,7 +76,6 @@ pub async fn create_client_memory(
  *
  */
 #[delete("/memories/{key}")]
-#[tracing::instrument(name="DELETE /memories/:key", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id), memory_key = crate::routes::tools::trunc(&path.key)))]
 pub async fn delete_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -97,6 +98,9 @@ pub async fn delete_memory(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&path.key));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::delete_client_memory(&client, &memory_key)
@@ -121,7 +125,6 @@ pub async fn delete_memory(
  *
  */
 #[delete("/memories")]
-#[tracing::instrument(name="DELETE /memories", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id)))]
 pub async fn delete_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -141,6 +144,8 @@ pub async fn delete_memories(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::delete_client_memories(&client)
@@ -163,7 +168,6 @@ pub async fn delete_memories(
  *
  */
 #[get("/memories/{key}")]
-#[tracing::instrument(name="GET /memories/:key", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id), memory_key = crate::routes::tools::trunc(&path.key)))]
 pub async fn get_memory(
     path: web::Path<MemoryKeyPath>,
     query: web::Query<ClientQuery>,
@@ -186,6 +190,9 @@ pub async fn get_memory(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
+    span.record("memory_key", crate::routes::tools::trunc(&path.key));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::get_client_memory(&client, &memory_key)
@@ -208,7 +215,6 @@ pub async fn get_memory(
 *
 */
 #[get("/memories")]
-#[tracing::instrument(name="GET /memories", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id)))]
 pub async fn get_memories(
     query: web::Query<ClientQuery>,
     req: actix_web::HttpRequest,
@@ -228,6 +234,8 @@ pub async fn get_memories(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::get_client_memories(&client)

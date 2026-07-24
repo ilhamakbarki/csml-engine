@@ -23,6 +23,47 @@ fn env_clean(key: &str) -> Option<String> {
         .filter(|v| !v.is_empty())
 }
 
+/// Per-request root span for `tracing-actix-web`.
+///
+/// The `TracingLogger` middleware turns this span into the APM **transaction** -- its
+/// `otel.name` is "METHOD /route" and `otel.kind = "server"`, so Elastic renders it as a
+/// `request` transaction named e.g. `POST /run` or `GET /bots/{bot_id}` (parameterised,
+/// low cardinality). We extend the default builder with our domain fields declared as
+/// `Empty` so each handler can attach them to the TRANSACTION via
+/// `tracing::Span::current().record(..)`, instead of every handler opening a second,
+/// redundant child span with its own `#[instrument]`.
+///
+/// A field must be declared at span creation to be recordable later, so every field any
+/// handler might set is declared here; handlers record only the subset they know and the
+/// rest stay empty. NOTE: `request_id` is intentionally NOT declared -- `root_span!`
+/// already emits its own (the actix request id); the CSML body's request id is recorded
+/// under `csml_request_id` to avoid a duplicate-field compile error.
+pub struct CsmlRootSpanBuilder;
+
+impl tracing_actix_web::RootSpanBuilder for CsmlRootSpanBuilder {
+    fn on_request_start(request: &actix_web::dev::ServiceRequest) -> tracing::Span {
+        tracing_actix_web::root_span!(
+            level = tracing_actix_web::Level::INFO,
+            request,
+            csml_request_id = tracing::field::Empty,
+            bot_id = tracing::field::Empty,
+            channel_id = tracing::field::Empty,
+            memory_key = tracing::field::Empty,
+            version_id = tracing::field::Empty,
+            flow_count = tracing::field::Empty,
+            db.limit = tracing::field::Empty
+        )
+    }
+
+    fn on_request_end<B: actix_web::body::MessageBody>(
+        span: tracing::Span,
+        outcome: &Result<actix_web::dev::ServiceResponse<B>, actix_web::Error>,
+    ) {
+        // Delegate so the transaction still gets http.status_code / otel.status_code.
+        tracing_actix_web::DefaultRootSpanBuilder::on_request_end(span, outcome);
+    }
+}
+
 /// Owns the `SdkTracerProvider` so the last batch can be flushed on shutdown.
 ///
 /// `global::set_tracer_provider` keeps a clone of the provider FOREVER, so `Drop` never

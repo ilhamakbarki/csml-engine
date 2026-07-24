@@ -23,7 +23,6 @@ pub struct BotIdPath {
 *
 */
 #[delete("/data/clients")]
-#[tracing::instrument(name="DELETE /data/clients", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id)))]
 pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpRequest) -> HttpResponse {
     let client = Client {
         user_id: query.user_id.clone(),
@@ -40,6 +39,8 @@ pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpR
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+    span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::delete_client(&client)
@@ -62,7 +63,6 @@ pub async fn delete_client(query: web::Query<ClientQuery>, req: actix_web::HttpR
  *
  */
 #[delete("/data/bots/{bot_id}")]
-#[tracing::instrument(name="DELETE /data/bots/:bot_id", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id)))]
 pub async fn delete_bot(path: web::Path<BotIdPath>, req: actix_web::HttpRequest) -> HttpResponse {
 
     if let Some(value) = validate_api_key(&req) {
@@ -74,6 +74,7 @@ pub async fn delete_bot(path: web::Path<BotIdPath>, req: actix_web::HttpRequest)
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         csml_engine::delete_all_bot_data(&path.bot_id)
@@ -97,7 +98,6 @@ pub async fn delete_bot(path: web::Path<BotIdPath>, req: actix_web::HttpRequest)
  *
  */
 #[post("/data/cleanup")]
-#[tracing::instrument(name="POST /data/cleanup", skip_all)]
 pub async fn delete_expired_data() -> HttpResponse {
 
     let span = tracing::Span::current();

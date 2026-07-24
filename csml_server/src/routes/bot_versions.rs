@@ -15,7 +15,6 @@ use std::thread;
  *
  */
 #[post("/bots/fold")]
-#[tracing::instrument(name="POST /bots/fold", skip_all, fields(bot_id = crate::routes::tools::trunc(&body.id), flow_count = body.flows.len() as i64))]
 pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest) -> HttpResponse {
     let bot = body.to_owned();
 
@@ -29,6 +28,8 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&body.id));
+    span.record("flow_count", body.flows.len() as i64);
     let res = thread::spawn(move || {
         let _guard = span.entered();
         fold_bot(bot)
@@ -53,7 +54,6 @@ pub async fn make_bot_fold(body: web::Json<CsmlBot>, req: actix_web::HttpRequest
  *
  */
 #[post("/bots")]
-#[tracing::instrument(name="POST /bots", skip_all, fields(bot_id = crate::routes::tools::trunc(&body.id), flow_count = body.flows.len() as i64))]
 pub async fn add_bot_version(
     body: web::Json<CsmlBot>,
     req: actix_web::HttpRequest,
@@ -70,6 +70,8 @@ pub async fn add_bot_version(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&body.id));
+    span.record("flow_count", body.flows.len() as i64);
     let res = thread::spawn(move || {
         let _guard = span.entered();
         create_bot_version(bot)
@@ -114,7 +116,6 @@ pub struct GetBotVersionsQuery {
  * }
  */
 #[get("/bots/{bot_id}")]
-#[tracing::instrument(name="GET /bots/:bot_id", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id)))]
 pub async fn get_bot_latest_version(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -131,6 +132,7 @@ pub async fn get_bot_latest_version(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         get_last_bot_version(&bot_id)
@@ -155,7 +157,6 @@ pub async fn get_bot_latest_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}")]
-#[tracing::instrument(name="DELETE /bots/:bot_id", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id)))]
 pub async fn delete_bot_versions(
     path: web::Path<BotIdPath>,
     req: actix_web::HttpRequest,
@@ -172,6 +173,7 @@ pub async fn delete_bot_versions(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         delete_all_bot_versions(&bot_id)
@@ -206,7 +208,6 @@ pub async fn delete_bot_versions(
  * }
  */
 #[get("/bots/{bot_id}/versions")]
-#[tracing::instrument(name="GET /bots/:bot_id/versions", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id), db.limit = query.limit.unwrap_or(0) as i64))]
 pub async fn get_bot_latest_versions(
     path: web::Path<BotIdPath>,
     query: web::Query<GetBotVersionsQuery>,
@@ -230,6 +231,8 @@ pub async fn get_bot_latest_versions(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("db.limit", query.limit.unwrap_or(0) as i64);
     let res = thread::spawn(move || {
         let _guard = span.entered();
         get_bot_versions(&bot_id, limit, pagination_key)
@@ -269,7 +272,6 @@ pub struct BotVersionPath {
  * }
  */
 #[get("/bots/{bot_id}/versions/{version_id}")]
-#[tracing::instrument(name="GET /bots/:bot_id/versions/:version_id", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id), version_id = crate::routes::tools::trunc(&path.version_id)))]
 pub async fn get_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -287,6 +289,8 @@ pub async fn get_bot_version(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("version_id", crate::routes::tools::trunc(&path.version_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         get_bot_by_version_id(&version_id, &bot_id)
@@ -311,7 +315,6 @@ pub async fn get_bot_version(
  * {"statusCode": 204}
  */
 #[delete("/bots/{bot_id}/versions/{version_id}")]
-#[tracing::instrument(name="DELETE /bots/:bot_id/versions/:version_id", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id), version_id = crate::routes::tools::trunc(&path.version_id)))]
 pub async fn delete_bot_version(
     path: web::Path<BotVersionPath>,
     req: actix_web::HttpRequest,
@@ -329,6 +332,8 @@ pub async fn delete_bot_version(
     }
 
     let span = tracing::Span::current();
+    span.record("bot_id", crate::routes::tools::trunc(&path.bot_id));
+    span.record("version_id", crate::routes::tools::trunc(&path.version_id));
     let res = thread::spawn(move || {
         let _guard = span.entered();
         delete_bot_version_id(&version_id, &bot_id)

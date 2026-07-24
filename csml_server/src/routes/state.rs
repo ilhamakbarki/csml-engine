@@ -12,7 +12,6 @@ pub struct ClientQuery {
 }
 
 #[get("/state")]
-#[tracing::instrument(name="GET /state", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id)))]
 pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   let client = Client {
@@ -31,6 +30,8 @@ pub async fn get_client_current_state(query: web::Query<ClientQuery>, req: actix
   }
 
   let span = tracing::Span::current();
+  span.record("bot_id", crate::routes::tools::trunc(&query.bot_id));
+  span.record("channel_id", crate::routes::tools::trunc(&query.channel_id));
   let res = thread::spawn(move || {
     let _guard = span.entered();
     csml_engine::get_current_state(&client)
