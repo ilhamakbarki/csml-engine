@@ -3,7 +3,7 @@ use crate::EngineError;
 use rusoto_s3::{DeleteObjectRequest, GetObjectRequest, PutObjectRequest, S3};
 use std::io::Read;
 
-#[tracing::instrument(name = "db.dynamo.s3.put_object", skip_all, fields(db_system = "dynamodb", db_operation = "PutObject", s3_key = crate::utils::trunc(key), s3_size = content.len() as i64))]
+#[tracing::instrument(name = "db.dynamo.s3.put_object", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "PutObject", s3_key = crate::utils::trunc(key), s3_size = content.len() as i64))]
 pub fn put_object(db: &mut DynamoDbClient, key: &str, content: String) -> Result<(), EngineError> {
     let bucket = match std::env::var("AWS_S3_BUCKET") {
         Ok(bucket) => bucket,
@@ -29,7 +29,7 @@ pub fn put_object(db: &mut DynamoDbClient, key: &str, content: String) -> Result
     Ok(())
 }
 
-#[tracing::instrument(name = "db.dynamo.s3.get_object", skip_all, fields(db_system = "dynamodb", db_operation = "GetObject", s3_key = crate::utils::trunc(key)))]
+#[tracing::instrument(name = "db.dynamo.s3.get_object", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetObject", s3_key = crate::utils::trunc(key)))]
 pub fn get_object(db: &mut DynamoDbClient, key: &str) -> Result<String, EngineError> {
     let bucket = match std::env::var("AWS_S3_BUCKET") {
         Ok(bucket) => bucket,
@@ -63,7 +63,7 @@ pub fn get_object(db: &mut DynamoDbClient, key: &str) -> Result<String, EngineEr
     }
 }
 
-#[tracing::instrument(level = "debug", name = "db.dynamo.s3.delete_object", skip_all, fields(db_system = "dynamodb", db_operation = "DeleteObject", s3_key = crate::utils::trunc(key)))]
+#[tracing::instrument(level = "debug", name = "db.dynamo.s3.delete_object", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "DeleteObject", s3_key = crate::utils::trunc(key)))]
 pub fn delete_object(db: &mut DynamoDbClient, key: &str) -> Result<(), EngineError> {
     let bucket = match std::env::var("AWS_S3_BUCKET") {
         Ok(bucket) => bucket,

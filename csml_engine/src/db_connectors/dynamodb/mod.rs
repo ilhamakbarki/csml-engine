@@ -17,7 +17,7 @@ use crate::db_connectors::dynamodb::utils::*;
 
 use rusoto_core::Region;
 
-#[tracing::instrument(name = "db.dynamo.setup.init", skip_all, fields(db_system = "dynamodb"))]
+#[tracing::instrument(name = "db.dynamo.setup.init", skip_all, fields(otel.kind = "client", db.system = "dynamodb"))]
 pub fn init() -> Result<Database, EngineError> {
     let region_name = std::env::var("AWS_REGION").ok();
     let dynamodb_endpoint = std::env::var("AWS_DYNAMODB_ENDPOINT").ok();

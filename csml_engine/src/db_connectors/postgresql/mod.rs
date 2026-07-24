@@ -17,7 +17,7 @@ use diesel::prelude::{Connection, PgConnection};
 
 embed_migrations!("migrations/postgresql");
 
-#[tracing::instrument(name = "db.pg.setup.init", skip_all, fields(db_system = "postgresql"))]
+#[tracing::instrument(name = "db.pg.setup.init", skip_all, fields(otel.kind = "client", db.system = "postgresql"))]
 pub fn init() -> Result<Database, EngineError> {
 
     let uri = match std::env::var("POSTGRESQL_URL") {
@@ -34,7 +34,7 @@ pub fn init() -> Result<Database, EngineError> {
     Ok(db)
 }
 
-#[tracing::instrument(name = "db.pg.setup.migrate", skip_all, fields(db_system = "postgresql"))]
+#[tracing::instrument(name = "db.pg.setup.migrate", skip_all, fields(otel.kind = "client", db.system = "postgresql"))]
 pub fn make_migrations() -> Result<(), EngineError> {
     let uri = match std::env::var("POSTGRESQL_URL") {
         Ok(var) => var,

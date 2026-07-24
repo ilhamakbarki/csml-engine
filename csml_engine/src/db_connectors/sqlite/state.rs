@@ -12,7 +12,7 @@ use super::{
 };
 use chrono::{NaiveDateTime};
 
-#[tracing::instrument(name = "db.sqlite.state.delete_key", skip_all, fields(db_system = "sqlite", db_operation = "delete", db_sql_table = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), state_key = crate::utils::trunc(key)))]
+#[tracing::instrument(name = "db.sqlite.state.delete_key", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete", db.collection = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), state_key = crate::utils::trunc(key)))]
 pub fn delete_state_key(
     client: &Client,
     type_: &str,
@@ -30,7 +30,7 @@ pub fn delete_state_key(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.sqlite.state.get_key", skip_all, fields(db_system = "sqlite", db_operation = "select", db_sql_table = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), state_key = crate::utils::trunc(key)))]
+#[tracing::instrument(name = "db.sqlite.state.get_key", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "select", db.collection = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), state_key = crate::utils::trunc(key)))]
 pub fn get_state_key(
     client: &Client,
     type_: &str,
@@ -58,7 +58,7 @@ pub fn get_state_key(
     }
 }
 
-#[tracing::instrument(name = "db.sqlite.state.get_current", skip_all, fields(db_system = "sqlite", db_operation = "select", db_sql_table = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.sqlite.state.get_current", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "select", db.collection = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_current_state(
     client: &Client,
     db: &SqliteClient,
@@ -88,7 +88,7 @@ pub fn get_current_state(
     Ok(Some(current_state))
 }
 
-#[tracing::instrument(name = "db.sqlite.state.set_items", skip_all, fields(db_system = "sqlite", db_operation = "insert", db_sql_table = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), db_batch_size = keys_values.len() as i64))]
+#[tracing::instrument(name = "db.sqlite.state.set_items", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "insert", db.collection = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(type_), db.batch_size = keys_values.len() as i64))]
 pub fn set_state_items(
     client: &Client,
     type_: &str,
@@ -127,7 +127,7 @@ pub fn set_state_items(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.sqlite.state.delete_user", skip_all, fields(db_system = "sqlite", db_operation = "delete", db_sql_table = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.sqlite.state.delete_user", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete", db.collection = "csml_states", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_state(
     client: &Client,
     db: &SqliteClient
@@ -141,7 +141,7 @@ pub fn delete_user_state(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.sqlite.state.delete_all_bot_data", skip_all, fields(db_system = "sqlite", db_operation = "delete", db_sql_table = "csml_states", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.sqlite.state.delete_all_bot_data", skip_all, fields(otel.kind = "client", db.system = "sqlite", db.operation = "delete", db.collection = "csml_states", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     db: &SqliteClient,

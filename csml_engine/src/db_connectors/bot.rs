@@ -11,7 +11,7 @@ use crate::error_messages::ERROR_DB_SETUP;
 use crate::{BotVersion, CsmlBot, Database, EngineError};
 use csml_interpreter::data::csml_logs::*;
 
-#[tracing::instrument(name = "db.bot.create_version", skip_all, fields(db_layer = "dispatch", db_operation = "insert", bot_id = crate::utils::trunc(&bot_id)))]
+#[tracing::instrument(name = "db.bot.create_version", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "insert", bot_id = crate::utils::trunc(&bot_id)))]
 pub fn create_bot_version(
     bot_id: String,
     csml_bot: CsmlBot,
@@ -103,7 +103,7 @@ pub fn create_bot_version(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.get_last_version", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.bot.get_last_version", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(bot_id)))]
 pub fn get_last_bot_version(
     bot_id: &str,
     db: &mut Database,
@@ -145,7 +145,7 @@ pub fn get_last_bot_version(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.get_by_version_id", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(_bot_id), version_id = crate::utils::trunc(version_id)))]
+#[tracing::instrument(name = "db.bot.get_by_version_id", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(_bot_id), version_id = crate::utils::trunc(version_id)))]
 pub fn get_by_version_id(
     version_id: &str,
     _bot_id: &str,
@@ -200,7 +200,7 @@ pub fn get_by_version_id(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.list_versions", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(bot_id), db_limit = ?limit, db_paginated = pagination_key.is_some()))]
+#[tracing::instrument(name = "db.bot.list_versions", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(bot_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_bot_versions(
     bot_id: &str,
     limit: Option<i64>,
@@ -260,7 +260,7 @@ pub fn get_bot_versions(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.delete_version", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(_bot_id), version_id = crate::utils::trunc(version_id)))]
+#[tracing::instrument(name = "db.bot.delete_version", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "delete", bot_id = crate::utils::trunc(_bot_id), version_id = crate::utils::trunc(version_id)))]
 pub fn delete_bot_version(
     _bot_id: &str,
     version_id: &str,
@@ -312,7 +312,7 @@ pub fn delete_bot_version(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.delete_versions", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.bot.delete_versions", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "delete", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_bot_versions(bot_id: &str, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(None, None, None, format!("db call delete bot versions")),
@@ -355,7 +355,7 @@ pub fn delete_bot_versions(bot_id: &str, db: &mut Database) -> Result<(), Engine
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.bot.delete_all_data", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.bot.delete_all_data", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "delete", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(bot_id: &str, db: &mut Database) -> Result<(), EngineError> {
     csml_logger(
         CsmlLog::new(None, None, None, format!("db call delete all bot data")),

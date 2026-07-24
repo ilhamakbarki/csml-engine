@@ -85,7 +85,7 @@ pub struct GetClientInfoQuery {
  * List all the conversations of a given client
  */
 #[get("/conversations")]
-#[tracing::instrument(name="GET /conversations", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id), db_limit = ?query.limit))]
+#[tracing::instrument(name="GET /conversations", skip_all, fields(bot_id = crate::routes::tools::trunc(&query.bot_id), channel_id = crate::routes::tools::trunc(&query.channel_id), db.limit = query.limit.unwrap_or(0) as i64))]
 pub async fn get_client_conversations(query: web::Query<GetClientInfoQuery>, req: actix_web::HttpRequest) -> HttpResponse {
 
   if let Some(value) = validate_api_key(&req) {

@@ -487,8 +487,9 @@ pub fn get_low_data_mode_value(event: &Event) -> bool {
 
 /// Clamp a label value to a byte length APM Server will accept (limit is 1024).
 /// `bot_id` / `channel_id` / `conversation_id` / memory keys are client-supplied and
-/// length-unvalidated; one oversized label makes apm-server reject the entire ndjson
-/// batch with a 400 that tracing-elastic-apm silently discards.
+/// length-unvalidated; one oversized attribute makes apm-server reject the whole OTLP
+/// export, and the batch span processor only reports that through its internal-logs
+/// channel -- the spans are simply gone.
 pub fn trunc(s: &str) -> &str {
     if s.len() <= 256 { return s; }
     let mut end = 256;

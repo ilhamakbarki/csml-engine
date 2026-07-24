@@ -20,7 +20,7 @@ fn format_bot_struct(bot: bson::document::Document) -> Result<DbBot, EngineError
     })
 }
 
-#[tracing::instrument(name = "db.mongo.bot.create_version", skip_all, fields(db_system = "mongodb", db_operation = "insert_one", db_collection = "bot", bot_id = crate::utils::trunc(&bot_id)))]
+#[tracing::instrument(name = "db.mongo.bot.create_version", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "insert_one", db.collection = "bot", bot_id = crate::utils::trunc(&bot_id)))]
 pub fn create_bot_version(
     bot_id: String,
     bot: String,
@@ -43,7 +43,7 @@ pub fn create_bot_version(
     Ok(id.to_hex())
 }
 
-#[tracing::instrument(name = "db.mongo.bot.list_versions", skip_all, fields(db_system = "mongodb", db_operation = "find", db_collection = "bot", bot_id = crate::utils::trunc(bot_id), db_limit = ?limit, db_paginated = pagination_key.is_some()))]
+#[tracing::instrument(name = "db.mongo.bot.list_versions", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find", db.collection = "bot", bot_id = crate::utils::trunc(bot_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_bot_versions(
     bot_id: &str,
     limit: Option<i64>,
@@ -126,7 +126,7 @@ pub fn get_bot_versions(
     }
 }
 
-#[tracing::instrument(name = "db.mongo.bot.get_by_version_id", skip_all, fields(db_system = "mongodb", db_operation = "find_one", db_collection = "bot", version_id = crate::utils::trunc(id)))]
+#[tracing::instrument(name = "db.mongo.bot.get_by_version_id", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "bot", version_id = crate::utils::trunc(id)))]
 pub fn get_bot_by_version_id(
     id: &str,
     db: &MongoDbClient,
@@ -167,7 +167,7 @@ pub fn get_bot_by_version_id(
     }
 }
 
-#[tracing::instrument(name = "db.mongo.bot.get_last_version", skip_all, fields(db_system = "mongodb", db_operation = "find_one", db_collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.mongo.bot.get_last_version", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
 pub fn get_last_bot_version(
     bot_id: &str,
     db: &MongoDbClient,
@@ -208,7 +208,7 @@ pub fn get_last_bot_version(
     }
 }
 
-#[tracing::instrument(name = "db.mongo.bot.delete_version", skip_all, fields(db_system = "mongodb", db_operation = "delete_one", db_collection = "bot", version_id = crate::utils::trunc(version_id)))]
+#[tracing::instrument(name = "db.mongo.bot.delete_version", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_one", db.collection = "bot", version_id = crate::utils::trunc(version_id)))]
 pub fn delete_bot_version(version_id: &str, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("bot");
 
@@ -221,7 +221,7 @@ pub fn delete_bot_version(version_id: &str, db: &MongoDbClient) -> Result<(), En
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.bot.delete_versions", skip_all, fields(db_system = "mongodb", db_operation = "delete_many", db_collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.mongo.bot.delete_versions", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = "bot", bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_bot_versions(bot_id: &str, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("bot");
 
@@ -234,7 +234,7 @@ pub fn delete_bot_versions(bot_id: &str, db: &MongoDbClient) -> Result<(), Engin
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.bot.delete_all_data", skip_all, fields(db_system = "mongodb", db_operation = "delete_many", db_collection = crate::utils::trunc(class), bot_id = crate::utils::trunc(bot_id)))]
+#[tracing::instrument(name = "db.mongo.bot.delete_all_data", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = crate::utils::trunc(class), bot_id = crate::utils::trunc(bot_id)))]
 pub fn delete_all_bot_data(
     bot_id: &str,
     class: &str,

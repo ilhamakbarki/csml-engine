@@ -72,7 +72,7 @@ pub fn make_range(args: &[&str]) -> String {
 /**
  * Batch write query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.batch_write", skip_all, fields(db_system = "dynamodb", db_operation = "BatchWriteItem"))]
+#[tracing::instrument(name = "db.dynamo.batch_write", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem"))]
 pub fn execute_batch_write_query(
     db: &mut DynamoDbClient,
     input: BatchWriteItemInput,
@@ -111,7 +111,7 @@ pub fn execute_batch_write_query(
 /**
  * Batch get query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.bot.batch_get", skip_all, fields(db_system = "dynamodb", db_operation = "BatchGetItem", db_collection = "bot"))]
+#[tracing::instrument(name = "db.dynamo.bot.batch_get", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchGetItem", db.collection = "bot"))]
 pub fn execute_bot_version_batch_get_query(
     db: &mut DynamoDbClient,
     input: BatchGetItemInput,
@@ -188,7 +188,7 @@ pub fn execute_bot_version_batch_get_query(
 /**
  * Batch get query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.message.batch_get", skip_all, fields(db_system = "dynamodb", db_operation = "BatchGetItem", db_collection = "message"))]
+#[tracing::instrument(name = "db.dynamo.message.batch_get", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchGetItem", db.collection = "message"))]
 pub fn execute_messages_batch_get_query(
     db: &mut DynamoDbClient,
     input: BatchGetItemInput,
@@ -254,7 +254,7 @@ pub fn execute_messages_batch_get_query(
 /**
  * Batch get query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.memory.batch_get", skip_all, fields(db_system = "dynamodb", db_operation = "BatchGetItem", db_collection = "memory"))]
+#[tracing::instrument(name = "db.dynamo.memory.batch_get", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchGetItem", db.collection = "memory"))]
 pub fn execute_memory_batch_get_query(
     db: &mut DynamoDbClient,
     input: BatchGetItemInput,
@@ -314,7 +314,7 @@ pub fn execute_memory_batch_get_query(
 /**
  * Batch get query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.conversation.batch_get", skip_all, fields(db_system = "dynamodb", db_operation = "BatchGetItem", db_collection = "conversation"))]
+#[tracing::instrument(name = "db.dynamo.conversation.batch_get", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchGetItem", db.collection = "conversation"))]
 pub fn execute_conversations_batch_get_query(
     db: &mut DynamoDbClient,
     input: BatchGetItemInput,
@@ -368,7 +368,7 @@ pub fn execute_conversations_batch_get_query(
 /**
  * Batch get query wrapper with exponential backoff in case of exceeded throughput
  */
-#[tracing::instrument(name = "db.dynamo.conversation.get_item", skip_all, fields(db_system = "dynamodb", db_operation = "GetItem", db_collection = "conversation"))]
+#[tracing::instrument(name = "db.dynamo.conversation.get_item", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetItem", db.collection = "conversation"))]
 pub fn execute_conversation_get_query(
     db: &mut DynamoDbClient,
     input: GetItemInput,

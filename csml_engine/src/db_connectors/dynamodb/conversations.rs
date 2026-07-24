@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::db_connectors::dynamodb::utils::*;
 
-#[tracing::instrument(name = "db.dynamo.conversation.create", skip_all, fields(db_system = "dynamodb", db_operation = "PutItem", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
+#[tracing::instrument(name = "db.dynamo.conversation.create", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "PutItem", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
 pub fn create_conversation(
     flow_id: &str,
     step_id: &str,
@@ -36,7 +36,7 @@ pub fn create_conversation(
  * entirely. This is not great but necessary because STATUS is embedded
  * in range key (ideally, we would use a secondary index instead).
  */
-#[tracing::instrument(name = "db.dynamo.conversation.close", skip_all, fields(db_system = "dynamodb", db_operation = "GetItem", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), status = crate::utils::trunc(status)))]
+#[tracing::instrument(name = "db.dynamo.conversation.close", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "GetItem", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), status = crate::utils::trunc(status)))]
 pub fn close_conversation(
     id: &str,
     client: &Client,
@@ -86,7 +86,7 @@ pub fn close_conversation(
  * To close a conversation, we must replace the given conversation,
  * ideally in a transaction to make sure that we don't lose a conversation in the process.
  */
-#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.replace", skip_all, fields(db_system = "dynamodb", db_operation = "TransactWriteItems", db_collection = "conversation"))]
+#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.replace", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "TransactWriteItems", db.collection = "conversation"))]
 fn replace_conversation(
     old_key: &DynamoDbKey,
     new_item: HashMap<String, AttributeValue>,
@@ -124,7 +124,7 @@ fn replace_conversation(
     Ok(())
 }
 
-#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.query_open", skip_all, fields(db_system = "dynamodb", db_operation = "Query", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.query_open", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 fn get_all_open_conversations(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -234,7 +234,7 @@ fn get_all_open_conversations(
     execute_conversations_batch_get_query(db, input)
 }
 
-#[tracing::instrument(name = "db.dynamo.conversation.close_all", skip_all, fields(db_system = "dynamodb", db_operation = "TransactWriteItems", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.dynamo.conversation.close_all", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "TransactWriteItems", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_all_conversations(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -258,7 +258,7 @@ pub fn close_all_conversations(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.dynamo.conversation.get_latest_open", skip_all, fields(db_system = "dynamodb", db_operation = "Query", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.dynamo.conversation.get_latest_open", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_latest_open(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -346,7 +346,7 @@ pub fn get_latest_open(
     }))
 }
 
-#[tracing::instrument(name = "db.dynamo.conversation.update", skip_all, fields(db_system = "dynamodb", db_operation = "UpdateItem", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = ?flow_id, step_id = ?step_id))]
+#[tracing::instrument(name = "db.dynamo.conversation.update", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "UpdateItem", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = ?flow_id, step_id = ?step_id))]
 pub fn update_conversation(
     conversation_id: &str,
     client: &Client,
@@ -439,7 +439,7 @@ pub fn update_conversation(
     }
 }
 
-#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.query", skip_all, fields(db_system = "dynamodb", db_operation = "Query", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = limit, db_paginated = pagination_key.is_some()))]
+#[tracing::instrument(level = "debug", name = "db.dynamo.conversation.query", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit, db_paginated = pagination_key.is_some()))]
 fn query_conversation(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -494,7 +494,7 @@ fn query_conversation(
     Ok(data)
 }
 
-#[tracing::instrument(name = "db.dynamo.conversation.delete_user", skip_all, fields(db_system = "dynamodb", db_operation = "BatchWriteItem", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.dynamo.conversation.delete_user", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "BatchWriteItem", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_conversations(
     client: &Client,
     db: &mut DynamoDbClient,
@@ -569,7 +569,7 @@ pub fn delete_user_conversations(
     }
 }
 
-#[tracing::instrument(name = "db.dynamo.conversation.list", skip_all, fields(db_system = "dynamodb", db_operation = "Query", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = ?limit, db_paginated = pagination_key.is_some()))]
+#[tracing::instrument(name = "db.dynamo.conversation.list", skip_all, fields(otel.kind = "client", db.system = "dynamodb", db.operation = "Query", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_client_conversations(
     client: &Client,
     db: &mut DynamoDbClient,

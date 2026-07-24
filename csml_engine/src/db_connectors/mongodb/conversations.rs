@@ -29,7 +29,7 @@ fn format_conversation_struct(
     })
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.create", skip_all, fields(db_system = "mongodb", db_operation = "insert_one", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
+#[tracing::instrument(name = "db.mongo.conversation.create", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "insert_one", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = crate::utils::trunc(flow_id), step_id = crate::utils::trunc(step_id)))]
 pub fn create_conversation(
     flow_id: &str,
     step_id: &str,
@@ -58,7 +58,7 @@ pub fn create_conversation(
     Ok(id.to_hex())
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.close", skip_all, fields(db_system = "mongodb", db_operation = "update_one", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), status = crate::utils::trunc(status)))]
+#[tracing::instrument(name = "db.mongo.conversation.close", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "update_one", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), status = crate::utils::trunc(status)))]
 pub fn close_conversation(
     id: &str,
     client: &Client,
@@ -85,7 +85,7 @@ pub fn close_conversation(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.close_all", skip_all, fields(db_system = "mongodb", db_operation = "update_many", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.mongo.conversation.close_all", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "update_many", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn close_all_conversations(client: &Client, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("conversation");
 
@@ -107,7 +107,7 @@ pub fn close_all_conversations(client: &Client, db: &MongoDbClient) -> Result<()
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.get_latest_open", skip_all, fields(db_system = "mongodb", db_operation = "find_one", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.mongo.conversation.get_latest_open", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find_one", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_latest_open(
     client: &Client,
     db: &MongoDbClient,
@@ -134,7 +134,7 @@ pub fn get_latest_open(
     }
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.update", skip_all, fields(db_system = "mongodb", db_operation = "update_one", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = ?flow_id, step_id = ?step_id))]
+#[tracing::instrument(name = "db.mongo.conversation.update", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "update_one", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), flow_id = ?flow_id, step_id = ?step_id))]
 pub fn update_conversation(
     conversation_id: &str,
     client: &Client,
@@ -174,7 +174,7 @@ pub fn update_conversation(
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.delete_user", skip_all, fields(db_system = "mongodb", db_operation = "delete_many", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.mongo.conversation.delete_user", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "delete_many", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn delete_user_conversations(client: &Client, db: &MongoDbClient) -> Result<(), EngineError> {
     let collection = db.client.collection::<Document>("conversation");
 
@@ -189,7 +189,7 @@ pub fn delete_user_conversations(client: &Client, db: &MongoDbClient) -> Result<
     Ok(())
 }
 
-#[tracing::instrument(name = "db.mongo.conversation.list", skip_all, fields(db_system = "mongodb", db_operation = "find", db_collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db_limit = ?limit, db_paginated = pagination_key.is_some()))]
+#[tracing::instrument(name = "db.mongo.conversation.list", skip_all, fields(otel.kind = "client", db.system = "mongodb", db.operation = "find", db.collection = "conversation", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), db.limit = limit.unwrap_or(0) as i64, db_paginated = pagination_key.is_some()))]
 pub fn get_client_conversations(
     client: &Client,
     db: &MongoDbClient,

@@ -1,6 +1,15 @@
 use crate::data::{ConversationInfo};
 
-#[tracing::instrument(name = "engine.callback.http_post", skip_all)]
+#[tracing::instrument(
+    name = "engine.callback.http_post",
+    skip_all,
+    fields(
+        otel.kind = "client",
+        http.request.method = "POST",
+        server.address = crate::utils::trunc(callback_url),
+        url.full = crate::utils::trunc(callback_url)
+    )
+)]
 fn format_and_transfer(callback_url: &str, msg: serde_json::Value) {
     let mut request = ureq::post(callback_url);
 

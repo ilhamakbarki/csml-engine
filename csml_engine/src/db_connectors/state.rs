@@ -14,7 +14,7 @@ use crate::{Database, EngineError};
 use crate::db_connectors::utils::*;
 use csml_interpreter::data::Client;
 
-#[tracing::instrument(name = "db.state.delete_key", skip_all, fields(db_layer = "dispatch", db_operation = "delete", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
+#[tracing::instrument(name = "db.state.delete_key", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "delete", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(key)))]
 pub fn delete_state_key(
     client: &Client,
     _type: &str,
@@ -67,7 +67,7 @@ pub fn delete_state_key(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.state.get_key", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(_key)))]
+#[tracing::instrument(name = "db.state.get_key", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id), state_type = crate::utils::trunc(_type), state_key = crate::utils::trunc(_key)))]
 pub fn get_state_key(
     client: &Client,
     _type: &str,
@@ -120,7 +120,7 @@ pub fn get_state_key(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.state.get_current", skip_all, fields(db_layer = "dispatch", db_operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
+#[tracing::instrument(name = "db.state.get_current", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "select", bot_id = crate::utils::trunc(&client.bot_id), channel_id = crate::utils::trunc(&client.channel_id)))]
 pub fn get_current_state(
     client: &Client,
     db: &mut Database,
@@ -171,7 +171,7 @@ pub fn get_current_state(
     Err(EngineError::Manager(ERROR_DB_SETUP.to_owned()))
 }
 
-#[tracing::instrument(name = "db.state.set_items", skip_all, fields(db_layer = "dispatch", db_operation = "insert", bot_id = crate::utils::trunc(&_client.bot_id), channel_id = crate::utils::trunc(&_client.channel_id), state_type = crate::utils::trunc(_type), db_batch_size = _keys_values.len() as i64))]
+#[tracing::instrument(name = "db.state.set_items", skip_all, fields(otel.kind = "internal", db.layer = "dispatch", db.operation = "insert", bot_id = crate::utils::trunc(&_client.bot_id), channel_id = crate::utils::trunc(&_client.channel_id), state_type = crate::utils::trunc(_type), db.batch_size = _keys_values.len() as i64))]
 pub fn set_state_items(
     _client: &Client,
     _type: &str,

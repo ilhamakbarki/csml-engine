@@ -24,8 +24,8 @@ pub fn validate_api_key(req: &actix_web::HttpRequest) -> Option<String> {
 /// Clamp a label value to a byte length APM Server will accept (limit is 1024).
 /// Every span field fed from a client-supplied string must go through this: nothing
 /// in this codebase validates the length of bot_id / channel_id / request_id, and a
-/// single oversized label causes apm-server to reject the entire ndjson batch with a
-/// 400 that tracing-elastic-apm silently discards (apm_client.rs:137-140).
+/// single oversized attribute causes apm-server to reject the whole OTLP export, which
+/// the batch span processor only reports through its internal-logs channel.
 pub fn trunc(s: &str) -> &str {
     if s.len() <= 256 { return s; }
     let mut end = 256;

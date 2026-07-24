@@ -247,7 +247,7 @@ pub fn get_client_memory(client: &Client, key: &str) -> Result<serde_json::Value
     fields(
         bot_id = crate::utils::trunc(&client.bot_id),
         channel_id = crate::utils::trunc(&client.channel_id),
-        db_limit = ?limit,
+        db.limit = limit.unwrap_or(0) as i64,
     )
 )]
 pub fn get_client_messages(
@@ -269,7 +269,7 @@ pub fn get_client_messages(
     fields(
         bot_id = crate::utils::trunc(&client.bot_id),
         channel_id = crate::utils::trunc(&client.channel_id),
-        db_limit = ?limit,
+        db.limit = limit.unwrap_or(0) as i64,
     )
 )]
 pub fn get_client_conversations(
@@ -417,7 +417,7 @@ pub fn get_bot_by_version_id(id: &str, bot_id: &str) -> Result<Option<BotVersion
     skip_all,
     fields(
         bot_id = crate::utils::trunc(bot_id),
-        db_limit = ?limit,
+        db.limit = limit.unwrap_or(0) as i64,
     )
 )]
 pub fn get_bot_versions(

@@ -206,7 +206,7 @@ pub async fn delete_bot_versions(
  * }
  */
 #[get("/bots/{bot_id}/versions")]
-#[tracing::instrument(name="GET /bots/:bot_id/versions", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id), db_limit = ?query.limit))]
+#[tracing::instrument(name="GET /bots/:bot_id/versions", skip_all, fields(bot_id = crate::routes::tools::trunc(&path.bot_id), db.limit = query.limit.unwrap_or(0) as i64))]
 pub async fn get_bot_latest_versions(
     path: web::Path<BotIdPath>,
     query: web::Query<GetBotVersionsQuery>,
